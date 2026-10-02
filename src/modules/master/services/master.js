@@ -175,6 +175,10 @@ async function simpan(pengguna, def, masukan, id = null) {
     }
     await periksaRelasi(klien, def, data, lama, galat);
     if (def.tabel === 'akun') await validasiAkun(klien, data, lama, galat);
+    if (def.tabel === 'barang' && lama && lama.jenis === 'stok' && data.jenis === 'jasa') {
+      const { rows } = await klien.query('SELECT 1 FROM mutasi_stok WHERE barang_id = $1 LIMIT 1', [lama.id]);
+      if (rows.length) galat.jenis = 'Barang sudah memiliki mutasi stok sehingga tidak bisa diubah menjadi jasa.';
+    }
     if (!galat.kode && data.kode) {
       const r = await klien.query(
         `SELECT 1 FROM ${def.tabel} WHERE lower(kode) = lower($1) AND deleted_at IS NULL AND id <> $2`,

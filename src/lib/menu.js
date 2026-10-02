@@ -17,10 +17,10 @@ const MENU = [
   {
     kode: 'persediaan', label: 'Persediaan', ikon: 'persediaan',
     anak: [
-      { label: 'Kartu Stok', href: '/persediaan/kartu-stok' },
-      { label: 'Mutasi Antar Gudang', href: '/persediaan/mutasi' },
-      { label: 'Penyesuaian Stok', href: '/persediaan/penyesuaian' },
-      { label: 'Stok Opname', href: '/persediaan/opname' },
+      { label: 'Kartu Stok', href: '/persediaan/kartu-stok', tersedia: true },
+      { label: 'Mutasi Antar Gudang', href: '/persediaan/mutasi', tersedia: true },
+      { label: 'Penyesuaian Stok', href: '/persediaan/penyesuaian', tersedia: true },
+      { label: 'Stok Opname', href: '/persediaan/opname', tersedia: true },
     ],
   },
   {

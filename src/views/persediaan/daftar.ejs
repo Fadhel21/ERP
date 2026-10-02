@@ -1,0 +1,34 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<section class="muncul">
+  <div class="bilah-alat">
+    <form class="cari" role="search" action="<%= k.dasar %>" method="get"
+          hx-get="<%= k.dasar %>" hx-target="#tabel-dokumen" hx-push-url="true"
+          hx-trigger="input changed delay:300ms from:input[name=q], change, submit" hx-indicator="#tabel-dokumen">
+      <label class="cari-isian">
+        <%- include('../partials/ikon', { nama: 'cari' }) %>
+        <span class="sr-only">Cari nomor atau keterangan</span>
+        <input type="search" name="q" value="<%= filter.q %>" placeholder="Cari nomor / keterangan…" autocomplete="off">
+      </label>
+      <label class="sr-only" for="f-status">Status</label>
+      <select id="f-status" name="status" class="pilih-ringkas">
+        <option value="">Semua status</option>
+        <% Object.entries(STATUS).forEach(([v, l]) => { %><option value="<%= v %>" <%= filter.status === v ? 'selected' : '' %>><%= l %></option><% }) %>
+      </select>
+      <label class="tanggal-ringkas"><span>Dari</span><input type="date" name="dari" value="<%= filter.dari %>"></label>
+      <label class="tanggal-ringkas"><span>s.d.</span><input type="date" name="sampai" value="<%= filter.sampai %>"></label>
+    </form>
+    <div class="bilah-alat-kanan">
+      <% if (boleh('persediaan', 'tambah')) { %>
+        <% if (k.kode === 'penyesuaian') { %>
+          <a class="tombol tombol-sekunder" href="<%= k.dasar %>/baru?jenis=saldo_awal">Saldo awal</a>
+        <% } %>
+        <a class="tombol tombol-utama" href="<%= k.dasar %>/baru">
+          <%- include('../partials/ikon', { nama: 'tambah' }) %><span><%= k.kode === 'opname' ? 'Mulai opname' : `Buat ${k.tunggal}` %></span>
+        </a>
+      <% } %>
+    </div>
+  </div>
+  <div id="tabel-dokumen" class="tabel-muat"><%- include('_tabel-dokumen') %></div>
+</section>
+<%- include('../partials/bawah') %>

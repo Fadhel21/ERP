@@ -35,7 +35,7 @@ const DEFINISI = {
       aktif,
     ],
     daftar: ['kode', 'nama', 'kategori_id', 'satuan_id', 'harga_beli', 'harga_jual', 'stok_minimum', 'aktif'],
-    referensi: [],
+    referensi: [['mutasi_stok', 'barang_id', 'mutasi stok'], ['penyesuaian_stok_detail', 'barang_id', 'baris penyesuaian'], ['transfer_gudang_detail', 'barang_id', 'baris mutasi gudang'], ['stok_opname_detail', 'barang_id', 'baris stok opname']],
   },
   kategori: {
     tabel: 'kategori_barang', judul: 'Kategori Barang', judulTunggal: 'kategori',
@@ -63,7 +63,7 @@ const DEFINISI = {
       aktif,
     ],
     daftar: ['kode', 'nama', 'alamat', 'aktif'],
-    referensi: [],
+    referensi: [['mutasi_stok', 'gudang_id', 'mutasi stok'], ['penyesuaian_stok', 'gudang_id', 'penyesuaian'], ['transfer_gudang', 'gudang_asal_id', 'mutasi gudang'], ['transfer_gudang', 'gudang_tujuan_id', 'mutasi gudang'], ['stok_opname', 'gudang_id', 'stok opname']],
   },
   pelanggan: {
     tabel: 'pelanggan', judul: 'Pelanggan', judulTunggal: 'pelanggan', prefiksKode: 'PLG',
@@ -114,6 +114,7 @@ const DEFINISI = {
       ['akun', 'induk_id', 'sub akun'],
       ['barang', 'akun_persediaan_id', 'barang'], ['barang', 'akun_pendapatan_id', 'barang'], ['barang', 'akun_hpp_id', 'barang'],
       ['pelanggan', 'akun_piutang_id', 'pelanggan'], ['pemasok', 'akun_hutang_id', 'pemasok'],
+      ['jurnal_detail', 'akun_id', 'baris jurnal'], ['penyesuaian_stok', 'akun_lawan_id', 'penyesuaian'],
     ],
   },
 };

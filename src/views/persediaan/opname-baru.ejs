@@ -1,0 +1,46 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<section class="kartu form-kartu muncul" style="max-width: 640px">
+  <header class="form-kepala">
+    <a class="tombol-ikon" href="/persediaan/opname" aria-label="Kembali"><%- include('../partials/ikon', { nama: 'kiri' }) %></a>
+    <div>
+      <h2>Mulai stok opname</h2>
+      <p class="teks-redup">Sistem membuat lembar hitung berisi semua barang stok aktif di gudang terpilih.</p>
+    </div>
+  </header>
+  <form method="post" action="/persediaan/opname" class="formulir" novalidate x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid-isian">
+      <div class="isian<%= galat.tanggal ? ' isian-galat' : '' %>">
+        <label for="f-tanggal">Tanggal hitung <span class="wajib">*</span></label>
+        <input id="f-tanggal" type="date" name="tanggal" value="<%= dok.tanggal %>" required>
+        <% if (galat.tanggal) { %><p class="pesan-galat"><%= galat.tanggal %></p><% } %>
+      </div>
+      <div class="isian<%= galat.gudang_id ? ' isian-galat' : '' %>">
+        <label for="f-gudang">Gudang <span class="wajib">*</span></label>
+        <select id="f-gudang" name="gudang_id">
+          <option value="">— Pilih gudang —</option>
+          <% gudang.forEach((g) => { %><option value="<%= g.id %>" <%= String(dok.gudang_id) === g.id || (!dok.gudang_id && gudang.length === 1) ? 'selected' : '' %>><%= g.kode %> · <%= g.nama %></option><% }) %>
+        </select>
+        <% if (galat.gudang_id) { %><p class="pesan-galat"><%= galat.gudang_id %></p><% } %>
+      </div>
+      <div class="isian lebar-penuh<%= galat.kategori_id ? ' isian-galat' : '' %>">
+        <label for="f-kategori">Kategori (opsional)</label>
+        <select id="f-kategori" name="kategori_id">
+          <option value="">Semua kategori</option>
+          <% kategori.forEach((c) => { %><option value="<%= c.id %>" <%= String(dok.kategori_id) === c.id ? 'selected' : '' %>><%= c.kode %> · <%= c.nama %></option><% }) %>
+        </select>
+        <% if (galat.kategori_id) { %><p class="pesan-galat"><%= galat.kategori_id %></p><% } else { %><p class="bantuan">Untuk opname bertahap per kategori.</p><% } %>
+      </div>
+      <div class="isian lebar-penuh">
+        <label for="f-ket">Keterangan</label>
+        <textarea id="f-ket" name="keterangan" rows="2" maxlength="500"><%= dok.keterangan || '' %></textarea>
+      </div>
+    </div>
+    <div class="form-aksi">
+      <a class="tombol tombol-sekunder" href="/persediaan/opname">Batal</a>
+      <button type="submit" class="tombol tombol-utama" :disabled="kirim"><%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Membuat…' : 'Buat lembar hitung'">Buat lembar hitung</span></button>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

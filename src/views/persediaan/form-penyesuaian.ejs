@@ -1,0 +1,64 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<% const salah = (n) => galat[n] ? `aria-invalid="true" aria-describedby="g-${n}"` : ''; %>
+<section class="kartu form-kartu muncul"
+         x-data="barisDokumen(<%= JSON.stringify(baris) %>, { pakaiHarga: <%= JSON.stringify(dok.jenis !== 'keluar') %> })">
+  <header class="form-kepala">
+    <a class="tombol-ikon" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" aria-label="Kembali"><%- include('../partials/ikon', { nama: 'kiri' }) %></a>
+    <div>
+      <h2><%= dok.id ? 'Ubah draft penyesuaian' : (dok.jenis === 'saldo_awal' ? 'Saldo awal persediaan' : 'Penyesuaian stok baru') %></h2>
+      <p class="teks-redup">Disimpan sebagai draft. Stok & jurnal baru berubah setelah diposting.</p>
+    </div>
+  </header>
+  <% if (Object.keys(galat).length) { %>
+    <div class="notifikasi notifikasi-galat getar" role="alert"><%- include('../partials/ikon', { nama: 'peringatan' }) %><span>Data belum tersimpan. Periksa isian yang ditandai.</span></div>
+  <% } %>
+
+  <form method="post" action="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" class="formulir" novalidate x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid-isian">
+      <div class="isian<%= galat.tanggal ? ' isian-galat' : '' %>">
+        <label for="f-tanggal">Tanggal <span class="wajib">*</span></label>
+        <input id="f-tanggal" type="date" name="tanggal" value="<%= dok.tanggal %>" required <%- salah('tanggal') %>>
+        <% if (galat.tanggal) { %><p class="pesan-galat" id="g-tanggal"><%= galat.tanggal %></p><% } %>
+      </div>
+      <div class="isian<%= galat.jenis ? ' isian-galat' : '' %>">
+        <label for="f-jenis">Jenis <span class="wajib">*</span></label>
+        <select id="f-jenis" name="jenis" @change="pakaiHarga = $event.target.value !== 'keluar'" <%- salah('jenis') %>>
+          <% Object.entries(JENIS_PENYESUAIAN).forEach(([v, l]) => { %><option value="<%= v %>" <%= dok.jenis === v ? 'selected' : '' %>><%= l %></option><% }) %>
+        </select>
+        <% if (galat.jenis) { %><p class="pesan-galat" id="g-jenis"><%= galat.jenis %></p><% } else { %><p class="bantuan">Saldo awal & masuk menambah stok; keluar mengurangi stok.</p><% } %>
+      </div>
+      <div class="isian<%= galat.gudang_id ? ' isian-galat' : '' %>">
+        <label for="f-gudang">Gudang <span class="wajib">*</span></label>
+        <select id="f-gudang" name="gudang_id" <%- salah('gudang_id') %>>
+          <option value="">— Pilih gudang —</option>
+          <% gudang.forEach((g) => { %><option value="<%= g.id %>" <%= String(dok.gudang_id) === g.id || (!dok.gudang_id && gudang.length === 1) ? 'selected' : '' %>><%= g.kode %> · <%= g.nama %></option><% }) %>
+        </select>
+        <% if (galat.gudang_id) { %><p class="pesan-galat" id="g-gudang_id"><%= galat.gudang_id %></p><% } %>
+      </div>
+      <div class="isian<%= galat.akun_lawan_id ? ' isian-galat' : '' %>">
+        <label for="f-akun">Akun lawan</label>
+        <select id="f-akun" name="akun_lawan_id" <%- salah('akun_lawan_id') %>>
+          <option value="">Bawaan (Selisih Persediaan / Ekuitas Saldo Awal)</option>
+          <% akun.forEach((a) => { %><option value="<%= a.id %>" <%= String(dok.akun_lawan_id) === a.id ? 'selected' : '' %>><%= a.kode %> · <%= a.nama %></option><% }) %>
+        </select>
+        <% if (galat.akun_lawan_id) { %><p class="pesan-galat" id="g-akun_lawan_id"><%= galat.akun_lawan_id %></p><% } else { %><p class="bantuan">Mis. barang rusak → Beban Lain-lain.</p><% } %>
+      </div>
+      <div class="isian lebar-penuh">
+        <label for="f-ket">Keterangan</label>
+        <textarea id="f-ket" name="keterangan" rows="2" maxlength="500"><%= dok.keterangan || '' %></textarea>
+      </div>
+    </div>
+
+    <%- include('_baris', { barang, baris, galat, pakaiHarga: true }) %>
+
+    <div class="form-aksi">
+      <a class="tombol tombol-sekunder" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>">Batal</a>
+      <button type="submit" class="tombol tombol-utama" :disabled="kirim" :aria-busy="kirim">
+        <%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Menyimpan…' : 'Simpan draft'">Simpan draft</span>
+      </button>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

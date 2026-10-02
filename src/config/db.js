@@ -6,6 +6,8 @@ const env = require('./env');
 // Jangan diubah ke parseFloat: perhitungan uang dilakukan di SQL.
 types.setTypeParser(1700, (v) => v);
 types.setTypeParser(20, (v) => v);
+// DATE (1082) sebagai string 'YYYY-MM-DD' agar tidak bergeser zona waktu.
+types.setTypeParser(1082, (v) => v);
 
 // Pool dibuat saat pertama dipakai.
 let _pool = null;

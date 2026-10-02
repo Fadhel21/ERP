@@ -379,6 +379,62 @@ textarea { resize: vertical; min-height: 72px; }
 .grup-isian legend { padding: 0 var(--jarak-2); font-weight: 600; font-size: 0.9rem; color: var(--warna-teks-redup); }
 .form-aksi { display: flex; justify-content: flex-end; gap: var(--jarak-2); padding-top: var(--jarak-2); border-top: 1px solid var(--warna-garis); }
 
+/* ---------- Dokumen transaksi ---------- */
+.status { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; vertical-align: middle; }
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.status-draft { background: var(--warna-permukaan-2); color: var(--warna-teks-redup); }
+.status-diposting { background: var(--warna-sukses-lembut); color: var(--warna-sukses); }
+.status-batal { background: var(--warna-galat-lembut); color: var(--warna-galat); }
+.lencana-status.peringatan { background: color-mix(in srgb, var(--warna-aksen) 18%, transparent); color: var(--warna-aksen); }
+.baris-peringatan td:first-child { box-shadow: inset 3px 0 0 var(--warna-aksen); }
+.masuk { color: var(--warna-sukses); }
+.keluar { color: var(--warna-galat); }
+
+.pilih-ringkas { width: auto; min-width: 150px; }
+.pilih-lebar { width: auto; min-width: 280px; max-width: 100%; flex: 1 1 280px; }
+.tanggal-ringkas { display: inline-flex; align-items: center; gap: var(--jarak-2); font-size: 0.85rem; color: var(--warna-teks-redup); }
+.tanggal-ringkas input { width: auto; }
+.tautan-baris { font-weight: 600; text-decoration: none; }
+.tautan-baris:hover { text-decoration: underline; }
+.sel-potong { max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+.kolom-no { width: 40px; color: var(--warna-teks-redup); }
+.kolom-qty { width: 170px; }
+.kolom-harga { width: 190px; }
+.tabel-baris { margin-bottom: var(--jarak-3); overflow: visible; }
+.tabel-baris td { vertical-align: top; white-space: normal; }
+.tabel-baris select, .tabel-baris input { min-width: 0; }
+.baris-masuk { animation: muncul var(--sedang) var(--kurva); }
+.isian-satuan { display: flex; align-items: center; gap: var(--jarak-2); }
+.satuan { font-size: 0.8rem; color: var(--warna-teks-redup); min-width: 32px; }
+.isian-salah, input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--warna-galat) !important; }
+.baris-saldo-awal td { background: var(--warna-permukaan-2); font-weight: 600; }
+
+.detail-kepala { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--jarak-3); }
+.detail-judul { flex: 1 1 240px; }
+.detail-judul h2 { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--jarak-2); }
+.detail-judul p { margin: var(--jarak-1) 0 0; }
+.detail-aksi { display: flex; flex-wrap: wrap; gap: var(--jarak-2); }
+.detail-aksi form { margin: 0; }
+.bahaya-teks { color: var(--warna-galat); }
+.bahaya-teks:hover { background: var(--warna-galat-lembut) !important; }
+.tombol-bahaya { background: var(--warna-galat); color: #fff; }
+.tombol-bahaya:hover { filter: brightness(1.08); }
+.info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--jarak-3) var(--jarak-4); margin: 0; }
+.info-grid dt { font-size: 0.78rem; color: var(--warna-teks-redup); text-transform: uppercase; letter-spacing: .04em; }
+.info-grid dd { margin: 2px 0 0; font-weight: 500; }
+.kotak-batal { padding: var(--jarak-3); border-radius: var(--radius-kecil); background: var(--warna-galat-lembut); color: var(--warna-galat); }
+.ringkas-kartu { display: grid; gap: var(--jarak-3); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: var(--jarak-3); }
+.tabel tfoot th, .tabel tfoot td { background: var(--warna-permukaan-2); border-top: 2px solid var(--warna-garis); }
+
+/* Dialog konfirmasi */
+.dialog-latar { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: var(--jarak-4); background: rgb(0 0 0 / 0.45); }
+.dialog {
+  width: 100%; max-width: 460px; display: grid; gap: var(--jarak-3);
+  background: var(--warna-permukaan); border: 1px solid var(--warna-garis); border-radius: 12px;
+  padding: var(--jarak-5); box-shadow: var(--bayangan-tinggi);
+}
+.dialog h3 { margin: 0; }
+
 /* ---------- Notifikasi ---------- */
 .notifikasi-wadah { position: fixed; right: var(--jarak-4); bottom: var(--jarak-4); z-index: 50; display: grid; gap: var(--jarak-2); max-width: min(420px, calc(100vw - 32px)); }
 .notifikasi {

@@ -1,0 +1,47 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<% const salah = (n) => galat[n] ? `aria-invalid="true" aria-describedby="g-${n}"` : ''; %>
+<section class="kartu form-kartu muncul" x-data="barisDokumen(<%= JSON.stringify(baris) %>, { pakaiHarga: false })">
+  <header class="form-kepala">
+    <a class="tombol-ikon" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" aria-label="Kembali"><%- include('../partials/ikon', { nama: 'kiri' }) %></a>
+    <div>
+      <h2><%= dok.id ? 'Ubah draft mutasi gudang' : 'Mutasi antar gudang baru' %></h2>
+      <p class="teks-redup">Memindahkan stok tanpa mengubah nilai persediaan. Disimpan sebagai draft.</p>
+    </div>
+  </header>
+  <% if (Object.keys(galat).length) { %>
+    <div class="notifikasi notifikasi-galat getar" role="alert"><%- include('../partials/ikon', { nama: 'peringatan' }) %><span>Data belum tersimpan. Periksa isian yang ditandai.</span></div>
+  <% } %>
+  <form method="post" action="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" class="formulir" novalidate x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid-isian">
+      <div class="isian<%= galat.tanggal ? ' isian-galat' : '' %>">
+        <label for="f-tanggal">Tanggal <span class="wajib">*</span></label>
+        <input id="f-tanggal" type="date" name="tanggal" value="<%= dok.tanggal %>" required <%- salah('tanggal') %>>
+        <% if (galat.tanggal) { %><p class="pesan-galat" id="g-tanggal"><%= galat.tanggal %></p><% } %>
+      </div>
+      <% [['gudang_asal_id', 'Dari gudang'], ['gudang_tujuan_id', 'Ke gudang']].forEach(([n, l]) => { %>
+        <div class="isian<%= galat[n] ? ' isian-galat' : '' %>">
+          <label for="f-<%= n %>"><%= l %> <span class="wajib">*</span></label>
+          <select id="f-<%= n %>" name="<%= n %>" <%- salah(n) %>>
+            <option value="">— Pilih gudang —</option>
+            <% gudang.forEach((g) => { %><option value="<%= g.id %>" <%= String(dok[n]) === g.id ? 'selected' : '' %>><%= g.kode %> · <%= g.nama %></option><% }) %>
+          </select>
+          <% if (galat[n]) { %><p class="pesan-galat" id="g-<%= n %>"><%= galat[n] %></p><% } %>
+        </div>
+      <% }) %>
+      <div class="isian lebar-penuh">
+        <label for="f-ket">Keterangan</label>
+        <textarea id="f-ket" name="keterangan" rows="2" maxlength="500"><%= dok.keterangan || '' %></textarea>
+      </div>
+    </div>
+    <%- include('_baris', { barang, baris, galat, pakaiHarga: false }) %>
+    <div class="form-aksi">
+      <a class="tombol tombol-sekunder" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>">Batal</a>
+      <button type="submit" class="tombol tombol-utama" :disabled="kirim" :aria-busy="kirim">
+        <%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Menyimpan…' : 'Simpan draft'">Simpan draft</span>
+      </button>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

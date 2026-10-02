@@ -1,0 +1,6 @@
+<% const tabP = [['kartu-stok', 'Kartu Stok'], ['penyesuaian', 'Penyesuaian'], ['mutasi', 'Mutasi Antar Gudang'], ['opname', 'Stok Opname']]; %>
+<nav class="tab-master" aria-label="Menu persediaan">
+  <% tabP.forEach(([kode, label]) => { const aktif = path.startsWith('/persediaan/' + kode); %>
+    <a href="/persediaan/<%= kode %>" class="tab<%= aktif ? ' aktif' : '' %>" <%- aktif ? 'aria-current="page"' : '' %>><%= label %></a>
+  <% }) %>
+</nav>

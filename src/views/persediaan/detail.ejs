@@ -1,0 +1,105 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<%
+const tgl = (s) => s ? s.split('-').reverse().join('/') : '—';
+const waktu = (t) => t ? new Date(t).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+const adaHarga = k.kode === 'penyesuaian';
+const diposting = dok.status !== 'draft';
+-%>
+<section class="kartu form-kartu muncul" x-data="{ dialogBatal: false }">
+  <header class="detail-kepala">
+    <a class="tombol-ikon" href="<%= k.dasar %>" aria-label="Kembali ke daftar"><%- include('../partials/ikon', { nama: 'kiri' }) %></a>
+    <div class="detail-judul">
+      <h2><span class="kode"><%= dok.nomor || `DRAFT-${dok.id}` %></span> <%- include('../partials/status', { status: dok.status }) %></h2>
+      <p class="teks-redup"><%= k.kode === 'penyesuaian' ? JENIS_PENYESUAIAN[dok.jenis] : 'Mutasi antar gudang' %> · <%= tgl(dok.tanggal) %></p>
+    </div>
+    <div class="detail-aksi">
+      <% if (dok.status === 'draft') { %>
+        <% if (boleh('persediaan', 'hapus')) { %>
+          <form method="post" action="<%= k.dasar %>/<%= dok.id %>/hapus" @submit="if (!confirm('Hapus draft ini?')) $event.preventDefault()">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="tombol tombol-sekunder bahaya-teks" type="submit"><%- include('../partials/ikon', { nama: 'hapus' }) %><span>Hapus</span></button>
+          </form>
+        <% } %>
+        <% if (boleh('persediaan', 'ubah')) { %>
+          <a class="tombol tombol-sekunder" href="<%= k.dasar %>/<%= dok.id %>/ubah"><%- include('../partials/ikon', { nama: 'ubah' }) %><span>Ubah</span></a>
+        <% } %>
+        <% if (boleh('persediaan', 'posting')) { %>
+          <form method="post" action="<%= k.dasar %>/<%= dok.id %>/posting" x-data="{ kirim: false }"
+                @submit="if (!confirm('Posting dokumen ini? Stok & jurnal akan diperbarui dan dokumen tidak bisa diubah lagi.')) $event.preventDefault(); else kirim = true">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="tombol tombol-utama" type="submit" :disabled="kirim"><%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Memposting…' : 'Posting'">Posting</span></button>
+          </form>
+        <% } %>
+      <% } else if (dok.status === 'diposting' && boleh('persediaan', 'batal')) { %>
+        <button class="tombol tombol-sekunder bahaya-teks" type="button" @click="dialogBatal = true; $nextTick(() => $refs.alasan.focus())">
+          <%- include('../partials/ikon', { nama: 'tutup' }) %><span>Batalkan</span>
+        </button>
+      <% } %>
+    </div>
+  </header>
+
+  <dl class="info-grid">
+    <% if (k.kode === 'penyesuaian') { %>
+      <div><dt>Gudang</dt><dd><%= dok.gudang_nama %></dd></div>
+      <div><dt>Akun lawan</dt><dd><%= dok.akun_lawan_label || 'Bawaan' %></dd></div>
+    <% } else { %>
+      <div><dt>Dari gudang</dt><dd><%= dok.asal_nama %></dd></div>
+      <div><dt>Ke gudang</dt><dd><%= dok.tujuan_nama %></dd></div>
+    <% } %>
+    <div><dt>Dibuat</dt><dd><%= dok.dibuat_nama || '—' %> <small class="teks-redup"><%= waktu(dok.created_at) %></small></dd></div>
+    <% if (dok.diposting_pada) { %><div><dt>Diposting</dt><dd><%= dok.diposting_nama %> <small class="teks-redup"><%= waktu(dok.diposting_pada) %></small></dd></div><% } %>
+    <% if (dok.jurnal_nomor) { %><div><dt>Jurnal</dt><dd class="kode"><%= dok.jurnal_nomor %><%= dok.jurnal_batal_nomor ? ` → dibalik ${dok.jurnal_batal_nomor}` : '' %></dd></div><% } %>
+    <% if (dok.keterangan) { %><div class="lebar-penuh"><dt>Keterangan</dt><dd><%= dok.keterangan %></dd></div><% } %>
+    <% if (dok.status === 'batal') { %>
+      <div class="lebar-penuh kotak-batal"><dt>Dibatalkan</dt><dd><%= dok.dibatalkan_nama %> · <%= waktu(dok.dibatalkan_pada) %> — <em><%= dok.alasan_batal %></em></dd></div>
+    <% } %>
+  </dl>
+
+  <div class="tabel-wadah">
+    <table class="tabel">
+      <thead><tr>
+        <th scope="col" class="kolom-no">#</th><th scope="col">Barang</th><th scope="col" class="angka">Qty</th>
+        <% if (adaHarga && dok.jenis !== 'keluar') { %><th scope="col" class="angka">Harga satuan</th><% } %>
+        <% if (diposting) { %><th scope="col" class="angka">Nilai</th><% } %>
+      </tr></thead>
+      <tbody>
+        <% dok.baris.forEach((b, i) => { %>
+          <tr>
+            <td class="kolom-no angka"><%= i + 1 %></td>
+            <td><span class="kode"><%= b.kode %></span> · <%= b.nama %></td>
+            <td class="angka"><%= formatKuantitas(b.qty) %> <small class="teks-redup"><%= b.satuan %></small></td>
+            <% if (adaHarga && dok.jenis !== 'keluar') { %><td class="angka"><%= formatDesimal(b.harga_satuan) %></td><% } %>
+            <% if (diposting) { %><td class="angka"><%= formatDesimal(b.nilai) %></td><% } %>
+          </tr>
+        <% }) %>
+      </tbody>
+      <% if (diposting) { %>
+        <tfoot><tr>
+          <th scope="row" colspan="<%= adaHarga && dok.jenis !== 'keluar' ? 4 : 3 %>" class="angka">Total</th>
+          <td class="angka"><strong><%= formatDesimal(jumlahUang(dok.baris.map((b) => b.nilai))) %></strong></td>
+        </tr></tfoot>
+      <% } %>
+    </table>
+  </div>
+
+  <% if (dok.status === 'diposting' && boleh('persediaan', 'batal')) { %>
+    <div class="dialog-latar" x-show="dialogBatal" x-transition.opacity x-cloak @keydown.escape.window="dialogBatal = false">
+      <form class="dialog" role="dialog" aria-modal="true" aria-labelledby="judul-batal" method="post" action="<%= k.dasar %>/<%= dok.id %>/batal"
+            @click.outside="dialogBatal = false" x-show="dialogBatal" x-transition>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <h3 id="judul-batal">Batalkan <%= dok.nomor %>?</h3>
+        <p class="teks-redup">Stok akan dikembalikan dan jurnal pembalik dibuat dengan tanggal hari ini. Tindakan ini tidak bisa diurungkan.</p>
+        <div class="isian">
+          <label for="f-alasan">Alasan pembatalan <span class="wajib">*</span></label>
+          <textarea id="f-alasan" name="alasan" rows="3" required maxlength="500" x-ref="alasan"></textarea>
+        </div>
+        <div class="form-aksi">
+          <button type="button" class="tombol tombol-sekunder" @click="dialogBatal = false">Kembali</button>
+          <button type="submit" class="tombol tombol-bahaya">Ya, batalkan</button>
+        </div>
+      </form>
+    </div>
+  <% } %>
+</section>
+<%- include('../partials/bawah') %>

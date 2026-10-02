@@ -1,0 +1,81 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<% const tgl = (s) => s ? s.split('-').reverse().join('/') : ''; %>
+<section class="muncul">
+  <form class="bilah-alat" method="get" action="/persediaan/kartu-stok"
+        <% if (mode === 'ringkasan') { %>hx-get="/persediaan/kartu-stok" hx-target="#tabel-stok" hx-push-url="true" hx-trigger="input changed delay:300ms from:input[name=q], change"<% } %>>
+    <% if (mode === 'kartu') { %>
+      <a class="tombol-ikon" href="/persediaan/kartu-stok<%= gudangId ? '?gudang=' + gudangId : '' %>" aria-label="Kembali ke ringkasan stok"><%- include('../partials/ikon', { nama: 'kiri' }) %></a>
+      <label class="sr-only" for="f-barang">Barang</label>
+      <select id="f-barang" name="barang" class="pilih-lebar" @change="$el.form.requestSubmit()">
+        <% barang.forEach((b) => { %><option value="<%= b.id %>" <%= b.id === barangId ? 'selected' : '' %>><%= b.kode %> · <%= b.nama %></option><% }) %>
+      </select>
+    <% } else { %>
+      <label class="cari-isian">
+        <%- include('../partials/ikon', { nama: 'cari' }) %>
+        <span class="sr-only">Cari barang</span>
+        <input type="search" name="q" value="<%= q %>" placeholder="Cari kode atau nama barang…" autocomplete="off">
+      </label>
+    <% } %>
+    <label class="sr-only" for="f-gudang">Gudang</label>
+    <select id="f-gudang" name="gudang" class="pilih-ringkas">
+      <option value="">Semua gudang</option>
+      <% gudang.forEach((g) => { %><option value="<%= g.id %>" <%= g.id === gudangId ? 'selected' : '' %>><%= g.nama %></option><% }) %>
+    </select>
+    <% if (mode === 'kartu') { %>
+      <label class="tanggal-ringkas"><span>Dari</span><input type="date" name="dari" value="<%= dari %>"></label>
+      <label class="tanggal-ringkas"><span>s.d.</span><input type="date" name="sampai" value="<%= sampai %>"></label>
+      <button class="tombol tombol-sekunder" type="submit">Tampilkan</button>
+    <% } else { %>
+      <label class="centang"><input type="checkbox" name="kurang" value="1" <%= kurang ? 'checked' : '' %>> Hanya di bawah minimum</label>
+    <% } %>
+  </form>
+
+  <% if (mode === 'ringkasan') { %>
+    <div id="tabel-stok" class="tabel-muat"><%- include('_tabel-stok') %></div>
+  <% } else { %>
+    <div class="ringkas-kartu">
+      <div class="kartu kpi"><div><p class="kpi-label">Saldo awal (<%= tgl(dari) %>)</p><p class="kpi-nilai angka"><%= formatKuantitas(kartu.awal.qty) %> <small><%= item && item.satuan %></small></p></div></div>
+      <div class="kartu kpi"><div><p class="kpi-label">Saldo akhir (<%= tgl(sampai) %>)</p>
+        <p class="kpi-nilai angka"><%= formatKuantitas(kartu.baris.length ? kartu.baris[kartu.baris.length - 1].saldo_berjalan : kartu.awal.qty) %> <small><%= item && item.satuan %></small></p></div></div>
+      <% if (!gudangId) { %>
+        <div class="kartu kpi"><div><p class="kpi-label">Nilai akhir</p>
+          <p class="kpi-nilai angka"><%= formatDesimal(kartu.baris.length ? kartu.baris[kartu.baris.length - 1].nilai_berjalan : kartu.awal.nilai) %></p></div></div>
+      <% } %>
+    </div>
+    <% if (!kartu.baris.length) { %>
+      <div class="kartu kosong"><%- include('../partials/ikon', { nama: 'kosong', kelas: 'ikon-besar' }) %><h2>Tidak ada mutasi</h2><p class="teks-redup">Tidak ada barang masuk/keluar pada rentang tanggal ini.</p></div>
+    <% } else { %>
+      <div class="tabel-wadah">
+        <table class="tabel">
+          <thead><tr>
+            <th scope="col">Tanggal</th><th scope="col">Dokumen</th><th scope="col">Gudang</th><th scope="col">Keterangan</th>
+            <th scope="col" class="angka">Masuk</th><th scope="col" class="angka">Keluar</th><th scope="col" class="angka">Saldo</th>
+            <% if (!gudangId) { %><th scope="col" class="angka">Nilai masuk</th><th scope="col" class="angka">Nilai keluar</th><th scope="col" class="angka">Saldo nilai</th><% } %>
+          </tr></thead>
+          <tbody>
+            <tr class="baris-saldo-awal"><td colspan="6">Saldo awal</td><td class="angka"><%= formatKuantitas(kartu.awal.qty) %></td>
+              <% if (!gudangId) { %><td colspan="2"></td><td class="angka"><%= formatDesimal(kartu.awal.nilai) %></td><% } %></tr>
+            <% kartu.baris.forEach((m) => { %>
+              <tr>
+                <td class="angka"><%= tgl(m.tanggal) %></td>
+                <td class="kode"><%= m.nomor_sumber %></td>
+                <td><%= m.gudang_kode %></td>
+                <td><%= m.keterangan %></td>
+                <td class="angka masuk"><%= m.qty_masuk !== '0.0000' ? formatKuantitas(m.qty_masuk) : '' %></td>
+                <td class="angka keluar"><%= m.qty_keluar !== '0.0000' ? formatKuantitas(m.qty_keluar) : '' %></td>
+                <td class="angka"><strong><%= formatKuantitas(m.saldo_berjalan) %></strong></td>
+                <% if (!gudangId) { %>
+                  <td class="angka"><%= m.nilai_masuk !== '0.00' ? formatDesimal(m.nilai_masuk) : '' %></td>
+                  <td class="angka"><%= m.nilai_keluar !== '0.00' ? formatDesimal(m.nilai_keluar) : '' %></td>
+                  <td class="angka"><%= formatDesimal(m.nilai_berjalan) %></td>
+                <% } %>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  <% } %>
+</section>
+<%- include('../partials/bawah') %>

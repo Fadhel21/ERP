@@ -1,0 +1,37 @@
+<% if (!ringkasan.length) { %>
+  <div class="kartu kosong">
+    <%- include('../partials/ikon', { nama: 'kosong', kelas: 'ikon-besar' }) %>
+    <h2><%= q || kurang ? 'Tidak ada hasil' : 'Belum ada barang stok' %></h2>
+    <p class="teks-redup"><%= q || kurang ? 'Tidak ada barang yang cocok dengan filter.' : 'Tambahkan barang berjenis stok di Master Data, lalu isi saldo awal lewat Penyesuaian.' %></p>
+  </div>
+<% } else { %>
+  <div class="tabel-wadah">
+    <table class="tabel">
+      <thead><tr>
+        <th scope="col">Kode</th><th scope="col">Nama barang</th>
+        <th scope="col" class="angka">Stok<%= gudangId ? ' gudang' : '' %></th><th scope="col">Satuan</th>
+        <th scope="col" class="angka">Minimum</th><th scope="col" class="angka">HPP rata-rata</th>
+        <% if (!gudangId) { %><th scope="col" class="angka">Nilai persediaan</th><% } %>
+        <th scope="col" class="kolom-aksi"><span class="sr-only">Kartu stok</span></th>
+      </tr></thead>
+      <tbody>
+        <% ringkasan.forEach((r) => { %>
+          <tr class="<%= r.kurang ? 'baris-peringatan' : '' %>">
+            <td class="kode"><%= r.kode %></td>
+            <td><%= r.nama %><% if (r.kurang) { %> <span class="lencana-status peringatan">Di bawah minimum</span><% } %></td>
+            <td class="angka"><strong><%= formatKuantitas(r.qty) %></strong></td>
+            <td><%= r.satuan %></td>
+            <td class="angka teks-redup"><%= formatKuantitas(r.stok_minimum) %></td>
+            <td class="angka"><%= formatDesimal(r.hpp) %></td>
+            <% if (!gudangId) { %><td class="angka"><%= formatDesimal(r.nilai_global) %></td><% } %>
+            <td class="kolom-aksi"><a class="tombol tombol-sekunder kecil" href="/persediaan/kartu-stok?barang=<%= r.id %><%= gudangId ? '&gudang=' + gudangId : '' %>">Kartu</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+      <% if (!gudangId) { %>
+        <tfoot><tr><th scope="row" colspan="6" class="angka">Total nilai persediaan</th>
+          <td class="angka"><strong><%= formatDesimal(jumlahUang(ringkasan.map((r) => r.nilai_global))) %></strong></td><td></td></tr></tfoot>
+      <% } %>
+    </table>
+  </div>
+<% } %>

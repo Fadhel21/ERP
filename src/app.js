@@ -14,6 +14,7 @@ const { tidakDitemukan, penanganGalat } = require('./middleware/error');
 const pengaturan = require('./modules/pengaturan/routes');
 const beranda = require('./modules/beranda/routes');
 const master = require('./modules/master/routes');
+const persediaan = require('./modules/persediaan/routes');
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.locals.namaAplikasi = 'ERP';
 app.locals.menuUntuk = menuUntuk;
 app.locals.formatDesimal = formatDesimal;
 app.locals.formatKuantitas = formatKuantitas;
+app.locals.jumlahUang = require('./lib/uang').jumlah;
 app.locals.nilaiSel = require('./modules/master/controllers/master').nilaiSel;
 app.use((req, res, next) => {
   res.locals.boleh = (modul, aksi = 'lihat') => !!req.pengguna && punyaAkses(req.pengguna.hakAkses, modul, aksi);
@@ -58,6 +60,7 @@ app.use(pengaturan.publik);
 app.use(wajibLogin);
 app.use(beranda);
 app.use('/master', master);
+app.use('/persediaan', persediaan);
 app.use('/pengaturan', pengaturan.modul);
 
 app.use(tidakDitemukan);

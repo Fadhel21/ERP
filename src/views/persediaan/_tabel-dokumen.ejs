@@ -1,0 +1,42 @@
+<%
+const qs = (h) => `?q=${encodeURIComponent(filter.q)}&status=${filter.status}&dari=${filter.dari}&sampai=${filter.sampai}&hal=${h}`;
+const tgl = (s) => s ? s.split('-').reverse().join('/') : '';
+-%>
+<% if (!baris.length) { %>
+  <div class="kartu kosong">
+    <%- include('../partials/ikon', { nama: 'kosong', kelas: 'ikon-besar' }) %>
+    <h2>Belum ada dokumen</h2>
+    <p class="teks-redup"><%= filter.q || filter.status || filter.dari || filter.sampai ? 'Tidak ada dokumen yang cocok dengan filter.' : `Klik tombol di kanan atas untuk membuat ${k.tunggal} pertama.` %></p>
+  </div>
+<% } else { %>
+  <div class="tabel-wadah">
+    <table class="tabel tabel-klik">
+      <thead><tr>
+        <th scope="col">Nomor</th><th scope="col">Tanggal</th>
+        <% k.kolomDaftar.forEach((c) => { %><th scope="col" class="<%= c.kanan ? 'angka' : '' %>"><%= c.judul %></th><% }) %>
+        <th scope="col">Keterangan</th><th scope="col">Status</th>
+      </tr></thead>
+      <tbody>
+        <% baris.forEach((d) => { %>
+          <tr>
+            <td><a class="kode tautan-baris" href="<%= k.dasar %>/<%= d.id %>"><%= d.nomor || `DRAFT-${d.id}` %></a></td>
+            <td class="angka"><%= tgl(d.tanggal) %></td>
+            <% k.kolomDaftar.forEach((c) => { %><td class="<%= c.kanan ? 'angka' : '' %>"><%= c.nilai(d) %></td><% }) %>
+            <td class="sel-potong" title="<%= d.keterangan || '' %>"><%= d.keterangan || '' %></td>
+            <td><%- include('../partials/status', { status: d.status }) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <div class="paging">
+    <span class="teks-redup"><%= (hal - 1) * perHalaman + 1 %>–<%= (hal - 1) * perHalaman + baris.length %> dari <%= total %> dokumen</span>
+    <% if (jumlahHal > 1) { %>
+      <div class="paging-tombol">
+        <a class="tombol tombol-sekunder kecil<%= hal <= 1 ? ' nonaktif' : '' %>" href="<%= k.dasar + qs(hal - 1) %>" hx-get="<%= k.dasar + qs(hal - 1) %>" hx-target="#tabel-dokumen" hx-push-url="true">Sebelumnya</a>
+        <span class="angka">Hal. <%= hal %> / <%= jumlahHal %></span>
+        <a class="tombol tombol-sekunder kecil<%= hal >= jumlahHal ? ' nonaktif' : '' %>" href="<%= k.dasar + qs(hal + 1) %>" hx-get="<%= k.dasar + qs(hal + 1) %>" hx-target="#tabel-dokumen" hx-push-url="true">Berikutnya</a>
+      </div>
+    <% } %>
+  </div>
+<% } %>

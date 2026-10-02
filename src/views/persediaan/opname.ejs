@@ -1,0 +1,123 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<%
+const tgl = (s) => s ? s.split('-').reverse().join('/') : '—';
+const draft = dok.status === 'draft';
+const bisaUbah = draft && boleh('persediaan', 'ubah');
+const dihitung = dok.baris.filter((b) => b.qty_fisik !== null).length;
+-%>
+<section class="kartu form-kartu muncul" style="max-width: 1100px" x-data="{ dialogBatal: false, cari: '', hanyaSelisih: false }">
+  <header class="detail-kepala">
+    <a class="tombol-ikon" href="/persediaan/opname" aria-label="Kembali ke daftar"><%- include('../partials/ikon', { nama: 'kiri' }) %></a>
+    <div class="detail-judul">
+      <h2><span class="kode"><%= dok.nomor || `DRAFT-${dok.id}` %></span> <%- include('../partials/status', { status: dok.status }) %></h2>
+      <p class="teks-redup">Stok opname · <%= dok.gudang_nama %> · <%= tgl(dok.tanggal) %> · <%= dihitung %> dari <%= dok.baris.length %> barang dihitung</p>
+    </div>
+    <div class="detail-aksi">
+      <% if (draft && boleh('persediaan', 'hapus')) { %>
+        <form method="post" action="/persediaan/opname/<%= dok.id %>/hapus" @submit="if (!confirm('Hapus draft opname ini?')) $event.preventDefault()">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="tombol tombol-sekunder bahaya-teks" type="submit"><%- include('../partials/ikon', { nama: 'hapus' }) %><span>Hapus</span></button>
+        </form>
+      <% } %>
+      <% if (draft && boleh('persediaan', 'posting')) { %>
+        <form method="post" action="/persediaan/opname/<%= dok.id %>/posting"
+              @submit="if (!confirm('Posting opname? Selisih terhadap stok terkini akan dicatat sebagai mutasi & jurnal. Simpan hitungan terlebih dahulu.')) $event.preventDefault()">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="tombol tombol-utama" type="submit"><%- include('../partials/ikon', { nama: 'centang' }) %><span>Posting</span></button>
+        </form>
+      <% } %>
+      <% if (dok.status === 'diposting' && boleh('persediaan', 'batal')) { %>
+        <button class="tombol tombol-sekunder bahaya-teks" type="button" @click="dialogBatal = true; $nextTick(() => $refs.alasan.focus())"><%- include('../partials/ikon', { nama: 'tutup' }) %><span>Batalkan</span></button>
+      <% } %>
+    </div>
+  </header>
+
+  <% if (dok.status === 'batal') { %>
+    <div class="kotak-batal"><strong>Dibatalkan</strong> oleh <%= dok.dibatalkan_nama %> — <em><%= dok.alasan_batal %></em></div>
+  <% } %>
+  <% if (dok.jurnal_nomor) { %><p class="teks-redup">Jurnal: <span class="kode"><%= dok.jurnal_nomor %></span><%= dok.jurnal_batal_nomor ? ` → dibalik ${dok.jurnal_batal_nomor}` : '' %></p><% } %>
+  <% if (draft) { %>
+    <p class="bantuan">Kosongkan qty fisik untuk barang yang tidak dihitung. Saat posting, selisih dihitung terhadap stok <strong>terkini</strong> (kolom "Stok sistem").</p>
+  <% } %>
+  <% if (Object.keys(galat).length) { %>
+    <div class="notifikasi notifikasi-galat" role="alert"><%- include('../partials/ikon', { nama: 'peringatan' }) %><span>Ada qty fisik yang tidak valid. Hitungan belum disimpan.</span></div>
+  <% } %>
+
+  <div class="bilah-alat">
+    <label class="cari-isian"><%- include('../partials/ikon', { nama: 'cari' }) %><span class="sr-only">Saring barang</span>
+      <input type="search" x-model="cari" placeholder="Saring barang…"></label>
+    <label class="centang"><input type="checkbox" x-model="hanyaSelisih"> Hanya yang selisih</label>
+  </div>
+
+  <form method="post" action="/persediaan/opname/<%= dok.id %>" x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="tabel-wadah">
+      <table class="tabel">
+        <thead><tr>
+          <th scope="col">Barang</th>
+          <th scope="col" class="angka">Stok sistem</th>
+          <th scope="col" class="angka kolom-qty">Qty fisik</th>
+          <th scope="col" class="angka">Selisih</th>
+          <% if (!draft) { %><th scope="col" class="angka">Nilai selisih</th><% } %>
+        </tr></thead>
+        <tbody>
+          <% dok.baris.forEach((b) => {
+               const sistem = draft ? b.qty_terkini : b.qty_sistem;
+               const nilaiFisik = masukan[`fisik_${b.id}`] !== undefined ? masukan[`fisik_${b.id}`] : (b.qty_fisik !== null ? formatKuantitas(b.qty_fisik) : '');
+          %>
+            <tr x-data="{ fisik: <%= JSON.stringify(nilaiFisik) %>, sistem: <%= JSON.stringify(sistem) %> }"
+                x-show="(!cari || <%= JSON.stringify((b.kode + ' ' + b.nama).toLowerCase()) %>.includes(cari.toLowerCase())) && (!hanyaSelisih || selisihTeks(fisik, sistem) !== '')">
+              <td><span class="kode"><%= b.kode %></span> · <%= b.nama %></td>
+              <td class="angka"><%= formatKuantitas(sistem) %> <small class="teks-redup"><%= b.satuan %></small></td>
+              <td>
+                <% if (bisaUbah) { %>
+                  <input name="fisik_<%= b.id %>" x-model="fisik" inputmode="decimal" class="angka rata-kanan<%= galat[`fisik_${b.id}`] ? ' isian-salah' : '' %>"
+                         aria-label="Qty fisik <%= b.kode %>" <%- galat[`fisik_${b.id}`] ? 'aria-invalid="true"' : '' %>>
+                  <% if (galat[`fisik_${b.id}`]) { %><p class="pesan-galat"><%= galat[`fisik_${b.id}`] %></p><% } %>
+                <% } else { %>
+                  <span class="angka"><%= b.qty_fisik !== null ? formatKuantitas(b.qty_fisik) : '—' %></span>
+                <% } %>
+              </td>
+              <td class="angka">
+                <% if (draft) { %>
+                  <span :class="selisihKelas(fisik, sistem)" x-text="selisihTeks(fisik, sistem)"></span>
+                <% } else { %>
+                  <span class="<%= b.qty_selisih.startsWith('-') ? 'keluar' : (b.qty_selisih === '0.0000' ? '' : 'masuk') %>"><%= b.qty_selisih === '0.0000' ? '' : formatKuantitas(b.qty_selisih) %></span>
+                <% } %>
+              </td>
+              <% if (!draft) { %><td class="angka"><%= b.nilai_selisih === '0.00' ? '' : formatDesimal(b.nilai_selisih) %></td><% } %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% if (bisaUbah) { %>
+      <div class="form-aksi">
+        <div class="isian" style="flex: 1">
+          <label for="f-ket" class="sr-only">Keterangan</label>
+          <input id="f-ket" name="keterangan" value="<%= dok.keterangan || '' %>" placeholder="Keterangan (opsional)" maxlength="500">
+        </div>
+        <button type="submit" class="tombol tombol-utama" :disabled="kirim"><%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Menyimpan…' : 'Simpan hitungan'">Simpan hitungan</span></button>
+      </div>
+    <% } %>
+  </form>
+
+  <% if (dok.status === 'diposting' && boleh('persediaan', 'batal')) { %>
+    <div class="dialog-latar" x-show="dialogBatal" x-transition.opacity x-cloak @keydown.escape.window="dialogBatal = false">
+      <form class="dialog" role="dialog" aria-modal="true" aria-labelledby="judul-batal" method="post" action="/persediaan/opname/<%= dok.id %>/batal"
+            @click.outside="dialogBatal = false" x-show="dialogBatal" x-transition>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <h3 id="judul-batal">Batalkan <%= dok.nomor %>?</h3>
+        <p class="teks-redup">Selisih stok dikembalikan dan jurnal pembalik dibuat dengan tanggal hari ini.</p>
+        <div class="isian"><label for="f-alasan">Alasan pembatalan <span class="wajib">*</span></label>
+          <textarea id="f-alasan" name="alasan" rows="3" required maxlength="500" x-ref="alasan"></textarea></div>
+        <div class="form-aksi">
+          <button type="button" class="tombol tombol-sekunder" @click="dialogBatal = false">Kembali</button>
+          <button type="submit" class="tombol tombol-bahaya">Ya, batalkan</button>
+        </div>
+      </form>
+    </div>
+  <% } %>
+</section>
+<%- include('../partials/bawah') %>
