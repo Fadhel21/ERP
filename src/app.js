@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const env = require('./config/env');
 const { punyaAkses } = require('./lib/akses');
+const { menuUntuk } = require('./lib/menu');
 const { bacaSesi, wajibLogin } = require('./middleware/auth');
 const { csrf } = require('./middleware/csrf');
 const { tidakDitemukan, penanganGalat } = require('./middleware/error');
@@ -38,6 +39,7 @@ app.use(bacaSesi);
 
 // Helper yang tersedia di semua view.
 app.locals.namaAplikasi = 'ERP';
+app.locals.menuUntuk = menuUntuk;
 app.use((req, res, next) => {
   res.locals.boleh = (modul, aksi = 'lihat') => !!req.pengguna && punyaAkses(req.pengguna.hakAkses, modul, aksi);
   res.locals.path = req.path;

@@ -1,16 +1,4 @@
-<%
-// tersedia: false = modul belum dibangun (ditampilkan nonaktif dengan label "Segera").
-const menu = [
-  { kode: 'beranda',    label: 'Beranda',     href: '/',            tersedia: true },
-  { kode: 'master',     label: 'Master Data', href: '/master',      tersedia: false },
-  { kode: 'persediaan', label: 'Persediaan',  href: '/persediaan',  tersedia: false },
-  { kode: 'pembelian',  label: 'Pembelian',   href: '/pembelian',   tersedia: false },
-  { kode: 'penjualan',  label: 'Penjualan',   href: '/penjualan',   tersedia: false },
-  { kode: 'akuntansi',  label: 'Akuntansi',   href: '/akuntansi',   tersedia: false },
-  { kode: 'laporan',    label: 'Laporan',     href: '/laporan',     tersedia: false },
-  { kode: 'pengaturan', label: 'Pengaturan',  href: '/pengaturan',  tersedia: false },
-].filter((m) => m.kode === 'beranda' || boleh(m.kode));
--%>
+<% const daftarMenu = menuUntuk(boleh, path); -%>
 <aside class="sidebar" :class="{ 'sidebar-buka': menuBuka }" @keydown.escape.window="menuBuka = false">
   <div class="sidebar-merek">
     <span class="logo" aria-hidden="true">E</span>
@@ -21,17 +9,31 @@ const menu = [
   </div>
   <nav aria-label="Menu utama">
     <ul class="menu">
-      <% menu.forEach((m) => { %>
-        <li>
-          <% if (m.tersedia) { %>
-            <a href="<%= m.href %>" class="menu-item<%= menuAktif === m.kode ? ' aktif' : '' %>"
-               <%- menuAktif === m.kode ? 'aria-current="page"' : '' %>>
-              <%- include('ikon', { nama: m.kode }) %><span><%= m.label %></span>
+      <% daftarMenu.forEach((m, i) => { %>
+        <li style="--urut: <%= i %>">
+          <% if (!m.anak.length) { %>
+            <a href="<%= m.href %>" class="menu-item<%= m.aktif ? ' aktif' : '' %>" <%- m.aktif ? 'aria-current="page"' : '' %>>
+              <%- include('ikon', { nama: m.ikon }) %><span><%= m.label %></span>
             </a>
           <% } else { %>
-            <span class="menu-item nonaktif" aria-disabled="true">
-              <%- include('ikon', { nama: m.kode }) %><span><%= m.label %></span><em class="lencana">Segera</em>
-            </span>
+            <div x-data="{ buka: <%= m.aktif %> }" class="menu-grup<%= m.aktif ? ' menu-grup-buka' : '' %>" :class="{ 'menu-grup-buka': buka }">
+              <button type="button" class="menu-item<%= m.aktif ? ' aktif-induk' : '' %>" @click="buka = !buka"
+                      :aria-expanded="buka" aria-controls="sub-<%= m.kode %>">
+                <%- include('ikon', { nama: m.ikon }) %><span><%= m.label %></span>
+                <%- include('ikon', { nama: 'panah', kelas: 'menu-panah' }) %>
+              </button>
+              <div class="submenu-wadah"><ul class="submenu" id="sub-<%= m.kode %>">
+                <% m.anak.forEach((a) => { %>
+                  <li>
+                    <% if (a.tersedia) { %>
+                      <a href="<%= a.href %>" class="submenu-item<%= a.aktif ? ' aktif' : '' %>" <%- a.aktif ? 'aria-current="page"' : '' %>><%= a.label %></a>
+                    <% } else { %>
+                      <span class="submenu-item nonaktif" aria-disabled="true" title="Belum tersedia"><%= a.label %><em class="lencana">Segera</em></span>
+                    <% } %>
+                  </li>
+                <% }) %>
+              </ul></div>
+            </div>
           <% } %>
         </li>
       <% }) %>

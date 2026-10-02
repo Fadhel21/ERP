@@ -15,12 +15,17 @@
 
       <ul class="login-modul">
         <% [
-          ['persediaan', 'Persediaan'], ['pembelian', 'Pembelian'], ['penjualan', 'Penjualan'],
-          ['akuntansi', 'Akuntansi'], ['laporan', 'Laporan'], ['master', 'Master Data'],
-        ].forEach(([ikon, label], i) => { %>
+          ['persediaan', 'Persediaan', 'Kartu stok & opname'],
+          ['pembelian', 'Pembelian', 'PO hingga hutang'],
+          ['penjualan', 'Penjualan', 'SO hingga piutang'],
+          ['akuntansi', 'Akuntansi', 'Jurnal & buku besar'],
+          ['laporan', 'Laporan', 'Neraca & laba rugi'],
+          ['master', 'Master Data', 'Barang, mitra, COA'],
+        ].forEach(([ikon, label, ket], i) => { %>
           <li style="--urut: <%= i %>">
-            <span class="login-modul-ikon"><%- include('partials/ikon', { nama: ikon }) %></span>
-            <span><%= label %></span>
+            <span class="login-modul-ikon"><%- include('partials/ilustrasi-modul', { nama: ikon }) %></span>
+            <strong><%= label %></strong>
+            <small><%= ket %></small>
           </li>
         <% }) %>
       </ul>
