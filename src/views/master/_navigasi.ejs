@@ -1,0 +1,5 @@
+<nav class="tab-master" aria-label="Jenis master data">
+  <% navigasi.forEach((n) => { %>
+    <a href="/master/<%= n.kode %>" class="tab<%= n.kode === entitas ? ' aktif' : '' %>" <%- n.kode === entitas ? 'aria-current="page"' : '' %>><%= n.judul %></a>
+  <% }) %>
+</nav>

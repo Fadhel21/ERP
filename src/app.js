@@ -8,9 +8,12 @@ const { punyaAkses } = require('./lib/akses');
 const { menuUntuk } = require('./lib/menu');
 const { bacaSesi, wajibLogin } = require('./middleware/auth');
 const { csrf } = require('./middleware/csrf');
+const { pesan } = require('./middleware/pesan');
+const { formatDesimal, formatKuantitas } = require('./lib/angka');
 const { tidakDitemukan, penanganGalat } = require('./middleware/error');
 const pengaturan = require('./modules/pengaturan/routes');
 const beranda = require('./modules/beranda/routes');
+const master = require('./modules/master/routes');
 
 const app = express();
 
@@ -35,11 +38,15 @@ app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser(env.cookieSecret));
 app.use(csrf);
+app.use(pesan);
 app.use(bacaSesi);
 
 // Helper yang tersedia di semua view.
 app.locals.namaAplikasi = 'ERP';
 app.locals.menuUntuk = menuUntuk;
+app.locals.formatDesimal = formatDesimal;
+app.locals.formatKuantitas = formatKuantitas;
+app.locals.nilaiSel = require('./modules/master/controllers/master').nilaiSel;
 app.use((req, res, next) => {
   res.locals.boleh = (modul, aksi = 'lihat') => !!req.pengguna && punyaAkses(req.pengguna.hakAkses, modul, aksi);
   res.locals.path = req.path;
@@ -50,6 +57,7 @@ app.use((req, res, next) => {
 app.use(pengaturan.publik);
 app.use(wajibLogin);
 app.use(beranda);
+app.use('/master', master);
 app.use('/pengaturan', pengaturan.modul);
 
 app.use(tidakDitemukan);

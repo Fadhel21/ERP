@@ -1,0 +1,79 @@
+<%
+const kolom = def.daftar.map((n) => def.field.find((f) => f.nama === n));
+const kanan = (f) => ['uang', 'kuantitas', 'bilangan'].includes(f.tipe);
+const qs = (h) => `?q=${encodeURIComponent(filter.q)}${filter.semua ? '&semua=1' : ''}&hal=${h}`;
+const bolehUbah = boleh('master', 'ubah');
+const bolehHapus = boleh('master', 'hapus');
+-%>
+<% if (locals.notifikasi) { %>
+  <div id="notifikasi" hx-swap-oob="innerHTML"><%- include('../partials/notifikasi', notifikasi) %></div>
+<% } %>
+
+<% if (!baris.length) { %>
+  <div class="kartu kosong">
+    <%- include('../partials/ikon', { nama: 'kosong', kelas: 'ikon-besar' }) %>
+    <h2><%= filter.q ? 'Tidak ada hasil' : `Belum ada data ${def.judulTunggal}` %></h2>
+    <p class="teks-redup"><%= filter.q ? `Tidak ditemukan ${def.judulTunggal} dengan kata "${filter.q}".` : `Klik "Tambah ${def.judulTunggal}" untuk mulai mengisi.` %></p>
+  </div>
+<% } else { %>
+  <div class="tabel-wadah">
+    <table class="tabel">
+      <thead>
+        <tr>
+          <% kolom.forEach((f) => { %><th scope="col" class="<%= kanan(f) ? 'angka' : '' %>"><%= f.label %></th><% }) %>
+          <% if (bolehUbah || bolehHapus) { %><th scope="col" class="kolom-aksi"><span class="sr-only">Aksi</span></th><% } %>
+        </tr>
+      </thead>
+      <tbody>
+        <% baris.forEach((b) => { %>
+          <tr class="<%= b.aktif === false ? 'baris-nonaktif' : '' %>">
+            <% kolom.forEach((f) => { %>
+              <td class="<%= kanan(f) ? 'angka' : '' %>">
+                <% if (f.nama === 'kode') { %>
+                  <strong class="kode"><%= b.kode %></strong>
+                <% } else if (f.tipe === 'boolean') { %>
+                  <span class="lencana-status <%= b[f.nama] ? 'ya' : 'tidak' %>"><%= b[f.nama] ? 'Ya' : 'Tidak' %></span>
+                <% } else if (f.nama === 'nama' && b.akun_header) { %>
+                  <strong><%= b.nama %></strong>
+                <% } else { %>
+                  <%= nilaiSel(f, b) %>
+                <% } %>
+              </td>
+            <% }) %>
+            <% if (bolehUbah || bolehHapus) { %>
+              <td class="kolom-aksi">
+                <% if (bolehUbah) { %>
+                  <a class="tombol-ikon kecil" href="/master/<%= entitas %>/<%= b.id %>/ubah" aria-label="Ubah <%= b.kode %>" title="Ubah">
+                    <%- include('../partials/ikon', { nama: 'ubah' }) %>
+                  </a>
+                <% } %>
+                <% if (bolehHapus) { %>
+                  <button type="button" class="tombol-ikon kecil bahaya" aria-label="Hapus <%= b.kode %>" title="Hapus"
+                          hx-post="/master/<%= entitas %>/<%= b.id %>/hapus<%= qs(hal) %>" hx-target="#tabel-master"
+                          data-konfirmasi="Hapus <%= def.judulTunggal %> <%= b.kode %> · <%= b.nama %>?">
+                    <%- include('../partials/ikon', { nama: 'hapus' }) %>
+                  </button>
+                <% } %>
+              </td>
+            <% } %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="paging">
+    <span class="teks-redup">
+      <%= (hal - 1) * perHalaman + 1 %>–<%= (hal - 1) * perHalaman + baris.length %> dari <%= total %> data
+    </span>
+    <% if (jumlahHal > 1) { %>
+      <div class="paging-tombol">
+        <a class="tombol tombol-sekunder kecil<%= hal <= 1 ? ' nonaktif' : '' %>" <%- hal <= 1 ? 'aria-disabled="true"' : '' %>
+           href="/master/<%= entitas %><%= qs(hal - 1) %>" hx-get="/master/<%= entitas %><%= qs(hal - 1) %>" hx-target="#tabel-master" hx-push-url="true">Sebelumnya</a>
+        <span class="angka">Hal. <%= hal %> / <%= jumlahHal %></span>
+        <a class="tombol tombol-sekunder kecil<%= hal >= jumlahHal ? ' nonaktif' : '' %>" <%- hal >= jumlahHal ? 'aria-disabled="true"' : '' %>
+           href="/master/<%= entitas %><%= qs(hal + 1) %>" hx-get="/master/<%= entitas %><%= qs(hal + 1) %>" hx-target="#tabel-master" hx-push-url="true">Berikutnya</a>
+      </div>
+    <% } %>
+  </div>
+<% } %>

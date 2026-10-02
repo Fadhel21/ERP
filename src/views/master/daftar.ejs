@@ -1,0 +1,35 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+
+<section class="muncul">
+  <div class="bilah-alat">
+    <form class="cari" role="search" action="/master/<%= entitas %>" method="get"
+          hx-get="/master/<%= entitas %>" hx-target="#tabel-master" hx-push-url="true"
+          hx-trigger="input changed delay:300ms from:input[name=q], change from:input[name=semua], submit"
+          hx-indicator="#tabel-master">
+      <label class="cari-isian">
+        <%- include('../partials/ikon', { nama: 'cari' }) %>
+        <span class="sr-only">Cari <%= def.judulTunggal %></span>
+        <input type="search" name="q" value="<%= filter.q %>" placeholder="Cari kode atau nama…" autocomplete="off">
+      </label>
+      <label class="centang">
+        <input type="checkbox" name="semua" value="1" <%= filter.semua ? 'checked' : '' %>> Tampilkan nonaktif
+      </label>
+    </form>
+    <div class="bilah-alat-kanan">
+      <a class="tombol tombol-sekunder" href="/master/<%= entitas %>/ekspor.csv?q=<%= encodeURIComponent(filter.q) %><%= filter.semua ? '&semua=1' : '' %>">
+        <%- include('../partials/ikon', { nama: 'unduh' }) %><span>Ekspor CSV</span>
+      </a>
+      <% if (boleh('master', 'tambah')) { %>
+        <a class="tombol tombol-utama" href="/master/<%= entitas %>/baru">
+          <%- include('../partials/ikon', { nama: 'tambah' }) %><span>Tambah <%= def.judulTunggal %></span>
+        </a>
+      <% } %>
+    </div>
+  </div>
+
+  <div id="tabel-master" class="tabel-muat">
+    <%- include('_tabel') %>
+  </div>
+</section>
+<%- include('../partials/bawah') %>

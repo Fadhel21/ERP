@@ -5,13 +5,13 @@ const MENU = [
   {
     kode: 'master', label: 'Master Data', ikon: 'master',
     anak: [
-      { label: 'Barang', href: '/master/barang' },
-      { label: 'Kategori Barang', href: '/master/kategori' },
-      { label: 'Satuan', href: '/master/satuan' },
-      { label: 'Gudang', href: '/master/gudang' },
-      { label: 'Pelanggan', href: '/master/pelanggan' },
-      { label: 'Pemasok', href: '/master/pemasok' },
-      { label: 'Bagan Akun (COA)', href: '/master/akun' },
+      { label: 'Barang', href: '/master/barang', tersedia: true },
+      { label: 'Kategori Barang', href: '/master/kategori', tersedia: true },
+      { label: 'Satuan', href: '/master/satuan', tersedia: true },
+      { label: 'Gudang', href: '/master/gudang', tersedia: true },
+      { label: 'Pelanggan', href: '/master/pelanggan', tersedia: true },
+      { label: 'Pemasok', href: '/master/pemasok', tersedia: true },
+      { label: 'Bagan Akun (COA)', href: '/master/akun', tersedia: true },
     ],
   },
   {

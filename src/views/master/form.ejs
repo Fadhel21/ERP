@@ -1,0 +1,103 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<%
+const aksi = rekaman.id ? `/master/${entitas}/${rekaman.id}` : `/master/${entitas}`;
+const utama = def.field.filter((f) => !f.grup);
+const grupAkun = def.field.filter((f) => f.grup === 'Akun');
+const nilai = (f) => {
+  const v = rekaman[f.nama];
+  if (v === undefined || v === null) return '';
+  if (f.tipe === 'uang') return formatDesimal(v, 2);
+  if (f.tipe === 'kuantitas') return formatKuantitas(v);
+  return v;
+};
+const adaGalat = Object.keys(galat).length > 0;
+-%>
+<section class="kartu form-kartu muncul">
+  <header class="form-kepala">
+    <a class="tombol-ikon" href="/master/<%= entitas %>" aria-label="Kembali ke daftar <%= def.judul %>">
+      <%- include('../partials/ikon', { nama: 'kiri' }) %>
+    </a>
+    <div>
+      <h2><%= rekaman.id ? `Ubah ${def.judulTunggal}` : `Tambah ${def.judulTunggal}` %></h2>
+      <p class="teks-redup">Kolom bertanda <span class="wajib">*</span> wajib diisi.</p>
+    </div>
+  </header>
+
+  <% if (adaGalat) { %>
+    <div class="notifikasi notifikasi-galat getar" role="alert">
+      <%- include('../partials/ikon', { nama: 'peringatan' }) %>
+      <span>Data belum tersimpan. Periksa <%= Object.keys(galat).length %> isian yang ditandai di bawah.</span>
+    </div>
+  <% } %>
+
+  <form method="post" action="<%= aksi %>" class="formulir" novalidate x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <% const gambarField = (f) => { %>
+      <div class="isian<%= f.tipe === 'teks_panjang' ? ' lebar-penuh' : '' %><%= galat[f.nama] ? ' isian-galat' : '' %>">
+        <% if (f.tipe === 'boolean') { %>
+          <label class="centang besar">
+            <input type="checkbox" name="<%= f.nama %>" <%= rekaman[f.nama] === true || rekaman[f.nama] === 'on' ? 'checked' : '' %>>
+            <span><%= f.label %></span>
+          </label>
+        <% } else { %>
+          <label for="f-<%= f.nama %>"><%= f.label %><% if (f.wajib) { %> <span class="wajib" aria-hidden="true">*</span><% } %></label>
+          <% if (f.tipe === 'pilihan' || f.tipe === 'relasi') { %>
+            <select id="f-<%= f.nama %>" name="<%= f.nama %>" <%= f.wajib ? 'required' : '' %>
+                    <%- galat[f.nama] ? `aria-invalid="true" aria-describedby="g-${f.nama}"` : '' %>>
+              <option value="">— Pilih <%= f.label.toLowerCase() %> —</option>
+              <% const daftarOpsi = f.tipe === 'pilihan' ? f.opsi.map(([v, l]) => ({ id: v, label: l })) : (opsi[f.nama] || []); %>
+              <% daftarOpsi.forEach((o) => { %>
+                <option value="<%= o.id %>" <%= String(rekaman[f.nama] ?? '') === String(o.id) ? 'selected' : '' %>><%= o.label %></option>
+              <% }) %>
+            </select>
+          <% } else if (f.tipe === 'teks_panjang') { %>
+            <textarea id="f-<%= f.nama %>" name="<%= f.nama %>" rows="3" maxlength="<%= f.maks %>"
+                      <%- galat[f.nama] ? `aria-invalid="true" aria-describedby="g-${f.nama}"` : '' %>><%= nilai(f) %></textarea>
+          <% } else { %>
+            <input id="f-<%= f.nama %>" name="<%= f.nama %>" value="<%= nilai(f) %>"
+                   type="<%= f.email ? 'email' : 'text' %>"
+                   <% if (['uang', 'kuantitas'].includes(f.tipe)) { %>inputmode="decimal" class="angka rata-kanan"<% } %>
+                   <% if (f.tipe === 'bilangan') { %>inputmode="numeric" class="angka rata-kanan"<% } %>
+                   <% if (f.inputmode) { %>inputmode="<%= f.inputmode %>"<% } %>
+                   <% if (f.nama === 'kode') { %>class="kode" autocapitalize="characters"<% } %>
+                   <%= f.maks ? `maxlength=${f.maks}` : '' %> <%= f.wajib ? 'required' : '' %>
+                   <%- galat[f.nama] ? `aria-invalid="true" aria-describedby="g-${f.nama}"` : '' %>>
+          <% } %>
+        <% } %>
+        <% if (galat[f.nama]) { %>
+          <p class="pesan-galat" id="g-<%= f.nama %>"><%- include('../partials/ikon', { nama: 'peringatan' }) %><%= galat[f.nama] %></p>
+        <% } else if (f.bantuan) { %>
+          <p class="bantuan"><%= f.bantuan %></p>
+        <% } else if (f.nama === 'kode' && def.prefiksKode && !rekaman.id) { %>
+          <p class="bantuan">Terisi otomatis, boleh diubah.</p>
+        <% } else if (['uang', 'kuantitas'].includes(f.tipe)) { %>
+          <p class="bantuan">Gunakan koma untuk desimal, contoh 1.500.000,50</p>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="grid-isian">
+      <% utama.forEach(gambarField) %>
+    </div>
+
+    <% if (grupAkun.length) { %>
+      <fieldset class="grup-isian">
+        <legend>Akun akuntansi</legend>
+        <div class="grid-isian">
+          <% grupAkun.forEach(gambarField) %>
+        </div>
+      </fieldset>
+    <% } %>
+
+    <div class="form-aksi">
+      <a class="tombol tombol-sekunder" href="/master/<%= entitas %>">Batal</a>
+      <button type="submit" class="tombol tombol-utama" :disabled="kirim" :aria-busy="kirim">
+        <%- include('../partials/ikon', { nama: 'centang' }) %>
+        <span x-text="kirim ? 'Menyimpan…' : 'Simpan'">Simpan</span>
+      </button>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

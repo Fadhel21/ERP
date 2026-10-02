@@ -30,5 +30,5 @@
         </form>
       </div>
     </header>
-    <div id="notifikasi" class="notifikasi-wadah" aria-live="polite"></div>
+    <div id="notifikasi" class="notifikasi-wadah" aria-live="polite"><% if (locals.pesanFlash) { %><%- include('notifikasi', pesanFlash) %><% } %></div>
     <main id="konten" class="konten" tabindex="-1">
