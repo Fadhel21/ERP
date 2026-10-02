@@ -1,0 +1,40 @@
+<%
+// tersedia: false = modul belum dibangun (ditampilkan nonaktif dengan label "Segera").
+const menu = [
+  { kode: 'beranda',    label: 'Beranda',     href: '/',            tersedia: true },
+  { kode: 'master',     label: 'Master Data', href: '/master',      tersedia: false },
+  { kode: 'persediaan', label: 'Persediaan',  href: '/persediaan',  tersedia: false },
+  { kode: 'pembelian',  label: 'Pembelian',   href: '/pembelian',   tersedia: false },
+  { kode: 'penjualan',  label: 'Penjualan',   href: '/penjualan',   tersedia: false },
+  { kode: 'akuntansi',  label: 'Akuntansi',   href: '/akuntansi',   tersedia: false },
+  { kode: 'laporan',    label: 'Laporan',     href: '/laporan',     tersedia: false },
+  { kode: 'pengaturan', label: 'Pengaturan',  href: '/pengaturan',  tersedia: false },
+].filter((m) => m.kode === 'beranda' || boleh(m.kode));
+-%>
+<aside class="sidebar" :class="{ 'sidebar-buka': menuBuka }" @keydown.escape.window="menuBuka = false">
+  <div class="sidebar-merek">
+    <span class="logo" aria-hidden="true">E</span>
+    <span><%= namaAplikasi %></span>
+    <button type="button" class="tombol-ikon hanya-seluler" @click="menuBuka = false" aria-label="Tutup menu">
+      <%- include('ikon', { nama: 'tutup' }) %>
+    </button>
+  </div>
+  <nav aria-label="Menu utama">
+    <ul class="menu">
+      <% menu.forEach((m) => { %>
+        <li>
+          <% if (m.tersedia) { %>
+            <a href="<%= m.href %>" class="menu-item<%= menuAktif === m.kode ? ' aktif' : '' %>"
+               <%- menuAktif === m.kode ? 'aria-current="page"' : '' %>>
+              <%- include('ikon', { nama: m.kode }) %><span><%= m.label %></span>
+            </a>
+          <% } else { %>
+            <span class="menu-item nonaktif" aria-disabled="true">
+              <%- include('ikon', { nama: m.kode }) %><span><%= m.label %></span><em class="lencana">Segera</em>
+            </span>
+          <% } %>
+        </li>
+      <% }) %>
+    </ul>
+  </nav>
+</aside>

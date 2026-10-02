@@ -1,0 +1,28 @@
+<%- include('../partials/atas') %>
+<section class="muncul">
+  <p class="teks-redup">Selamat datang, <strong><%= pengguna.nama %></strong>.</p>
+
+  <div class="grid-kpi">
+    <% [
+      { label: 'Penjualan bulan ini', ikon: 'penjualan' },
+      { label: 'Pembelian bulan ini', ikon: 'pembelian' },
+      { label: 'Piutang belum lunas', ikon: 'akuntansi' },
+      { label: 'Barang di bawah stok minimum', ikon: 'persediaan' },
+    ].forEach((k) => { %>
+      <article class="kartu kpi">
+        <div class="kpi-ikon"><%- include('../partials/ikon', { nama: k.ikon }) %></div>
+        <div>
+          <p class="kpi-label"><%= k.label %></p>
+          <p class="kpi-nilai angka">—</p>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+
+  <div class="kartu kosong">
+    <%- include('../partials/ikon', { nama: 'info', kelas: 'ikon-besar' }) %>
+    <h2>Kerangka aplikasi siap</h2>
+    <p class="teks-redup">Modul master data, persediaan, pembelian, penjualan, akuntansi, dan laporan akan diaktifkan bertahap. Angka di kartu di atas akan terisi setelah modulnya tersedia.</p>
+  </div>
+</section>
+<%- include('../partials/bawah') %>

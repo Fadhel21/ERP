@@ -1,0 +1,34 @@
+<%- include('kepala') %>
+<body hx-headers='{"X-CSRF-Token": "<%= csrfToken %>"}' x-data="{ menuBuka: false }" :class="{ 'kunci-gulir': menuBuka }">
+<a class="lewati" href="#konten">Langsung ke konten</a>
+<div class="kerangka">
+  <%- include('sidebar') %>
+  <div class="tirai" x-show="menuBuka" x-transition.opacity @click="menuBuka = false"></div>
+  <div class="utama">
+    <header class="bilah-atas">
+      <button type="button" class="tombol-ikon hanya-seluler" @click="menuBuka = true" aria-label="Buka menu">
+        <%- include('ikon', { nama: 'menu' }) %>
+      </button>
+      <h1 class="judul-halaman"><%= judul %></h1>
+      <div class="bilah-atas-kanan">
+        <button type="button" class="tombol-ikon" data-ganti-tema aria-label="Ganti tema terang/gelap">
+          <span class="tema-gelap-saja"><%- include('ikon', { nama: 'matahari' }) %></span>
+          <span class="tema-terang-saja"><%- include('ikon', { nama: 'bulan' }) %></span>
+        </button>
+        <div class="profil">
+          <span class="profil-avatar" aria-hidden="true"><%= (pengguna.nama || '?').charAt(0).toUpperCase() %></span>
+          <span class="profil-teks">
+            <strong><%= pengguna.nama %></strong>
+            <small><%= pengguna.peran %></small>
+          </span>
+        </div>
+        <form method="post" action="/logout">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="tombol-ikon" aria-label="Keluar" title="Keluar">
+            <%- include('ikon', { nama: 'keluar' }) %>
+          </button>
+        </form>
+      </div>
+    </header>
+    <div id="notifikasi" class="notifikasi-wadah" aria-live="polite"></div>
+    <main id="konten" class="konten" tabindex="-1">

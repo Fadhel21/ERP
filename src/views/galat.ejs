@@ -1,0 +1,17 @@
+<% if (locals.pengguna) { %>
+  <%- include('partials/atas') %>
+<% } else { %>
+  <%- include('partials/kepala') %>
+  <body class="halaman-login"><main class="login-wadah">
+<% } %>
+<section class="kartu kosong muncul">
+  <%- include('partials/ikon', { nama: 'peringatan', kelas: 'ikon-besar' }) %>
+  <h2><%= status %> · <%= judul %></h2>
+  <p class="teks-redup"><%= pesan %></p>
+  <a class="tombol tombol-sekunder" href="/">Kembali ke Beranda</a>
+</section>
+<% if (locals.pengguna) { %>
+  <%- include('partials/bawah') %>
+<% } else { %>
+  </main></body></html>
+<% } %>

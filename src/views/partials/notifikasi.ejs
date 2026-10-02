@@ -1,0 +1,8 @@
+<div class="notifikasi notifikasi-<%= jenis %>" role="<%= jenis === 'galat' ? 'alert' : 'status' %>"
+     x-data="{ tampil: true }" x-show="tampil" x-transition x-init="setTimeout(() => tampil = false, 6000)">
+  <%- include('ikon', { nama: jenis === 'galat' ? 'peringatan' : 'centang' }) %>
+  <span><%= pesan %></span>
+  <button type="button" class="tombol-ikon kecil" @click="tampil = false" aria-label="Tutup notifikasi">
+    <%- include('ikon', { nama: 'tutup' }) %>
+  </button>
+</div>

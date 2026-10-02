@@ -4,12 +4,25 @@
   "private": true,
   "description": "ERP ramping: Express + EJS + HTMX + PostgreSQL",
   "main": "src/server.js",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.js",
     "worker": "node worker/index.js",
     "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js",
     "test": "node tests/run.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "dayjs": "^1.11.23",
+    "dotenv": "^18.0.5",
+    "ejs": "^6.0.1",
+    "express": "^4.22.3",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1"
   }
 }
