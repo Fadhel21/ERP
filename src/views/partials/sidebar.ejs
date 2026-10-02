@@ -1,42 +1,76 @@
-<% const daftarMenu = menuUntuk(boleh, path); -%>
-<aside class="sidebar" :class="{ 'sidebar-buka': menuBuka }" @keydown.escape.window="menuBuka = false">
+<%
+const daftarMenu = menuUntuk(boleh, path);
+let seksiTerakhir = null;
+-%>
+<aside class="sidebar" :class="{ 'sidebar-buka': menuBuka }" @keydown.escape.window="menuBuka = false"
+       x-data="{ cariMenu: '' }" aria-label="Navigasi">
   <div class="sidebar-merek">
     <span class="logo" aria-hidden="true">E</span>
-    <span><%= namaAplikasi %></span>
+    <span class="sidebar-teks merek-teks"><strong><%= namaAplikasi %></strong><small>Sistem terpadu</small></span>
+    <button type="button" class="tombol-ikon sidebar-ciut hanya-desktop" @click="ciut = !ciut"
+            :aria-label="ciut ? 'Lebarkan sidebar' : 'Ciutkan sidebar'" :aria-pressed="ciut" title="Ciutkan / lebarkan">
+      <%- include('ikon', { nama: 'panel' }) %>
+    </button>
     <button type="button" class="tombol-ikon hanya-seluler" @click="menuBuka = false" aria-label="Tutup menu">
       <%- include('ikon', { nama: 'tutup' }) %>
     </button>
   </div>
-  <nav aria-label="Menu utama">
+
+  <label class="sidebar-cari sidebar-teks">
+    <%- include('ikon', { nama: 'cari' }) %>
+    <span class="sr-only">Cari menu</span>
+    <input type="search" x-model="cariMenu" placeholder="Cari menu…" autocomplete="off" @keydown.escape="cariMenu = ''">
+  </label>
+
+  <nav class="sidebar-nav" aria-label="Menu utama">
     <ul class="menu">
-      <% daftarMenu.forEach((m, i) => { %>
-        <li style="--urut: <%= i %>">
-          <% if (!m.anak.length) { %>
-            <a href="<%= m.href %>" class="menu-item<%= m.aktif ? ' aktif' : '' %>" <%- m.aktif ? 'aria-current="page"' : '' %>>
-              <%- include('ikon', { nama: m.ikon }) %><span><%= m.label %></span>
+      <% daftarMenu.forEach((m) => { %>
+        <% if (m.seksi && m.seksi !== seksiTerakhir) { seksiTerakhir = m.seksi; %>
+          <li class="menu-seksi sidebar-teks" x-show="!cariMenu" aria-hidden="true"><%= m.seksi %></li>
+        <% } %>
+        <% if (!m.anak.length) { %>
+          <li x-show="!cariMenu || <%= JSON.stringify(m.label.toLowerCase()) %>.includes(cariMenu.toLowerCase())">
+            <a href="<%= m.href %>" class="menu-item<%= m.aktif ? ' aktif' : '' %>" <%- m.aktif ? 'aria-current="page"' : '' %> title="<%= m.label %>">
+              <span class="menu-ikon"><%- include('ikon', { nama: m.ikon }) %></span><span class="sidebar-teks"><%= m.label %></span>
             </a>
-          <% } else { %>
-            <div x-data="{ buka: <%= m.aktif %> }" class="menu-grup<%= m.aktif ? ' menu-grup-buka' : '' %>" :class="{ 'menu-grup-buka': buka }">
-              <button type="button" class="menu-item<%= m.aktif ? ' aktif-induk' : '' %>" @click="buka = !buka"
-                      :aria-expanded="buka" aria-controls="sub-<%= m.kode %>">
-                <%- include('ikon', { nama: m.ikon }) %><span><%= m.label %></span>
-                <%- include('ikon', { nama: 'panah', kelas: 'menu-panah' }) %>
-              </button>
-              <div class="submenu-wadah"><ul class="submenu" id="sub-<%= m.kode %>">
-                <% m.anak.forEach((a) => { %>
-                  <li>
-                    <% if (a.tersedia) { %>
-                      <a href="<%= a.href %>" class="submenu-item<%= a.aktif ? ' aktif' : '' %>" <%- a.aktif ? 'aria-current="page"' : '' %>><%= a.label %></a>
-                    <% } else { %>
-                      <span class="submenu-item nonaktif" aria-disabled="true" title="Belum tersedia"><%= a.label %><em class="lencana">Segera</em></span>
-                    <% } %>
-                  </li>
-                <% }) %>
-              </ul></div>
-            </div>
-          <% } %>
-        </li>
+          </li>
+        <% } else {
+             const kataKunci = [m.label, ...m.anak.map((a) => a.label)].join(' ').toLowerCase(); %>
+          <li x-data="{ buka: <%= m.aktif %> }" class="menu-grup<%= m.aktif ? ' menu-grup-buka' : '' %>"
+              :class="{ 'menu-grup-buka': buka || (cariMenu && <%= JSON.stringify(kataKunci) %>.includes(cariMenu.toLowerCase())) }"
+              x-show="!cariMenu || <%= JSON.stringify(kataKunci) %>.includes(cariMenu.toLowerCase())">
+            <button type="button" class="menu-item<%= m.aktif ? ' aktif-induk' : '' %>" title="<%= m.label %>"
+                    @click="if (ciut) { ciut = false; buka = true } else { buka = !buka }"
+                    :aria-expanded="buka" aria-controls="sub-<%= m.kode %>">
+              <span class="menu-ikon"><%- include('ikon', { nama: m.ikon }) %></span>
+              <span class="sidebar-teks"><%= m.label %></span>
+              <%- include('ikon', { nama: 'panah', kelas: 'menu-panah sidebar-teks' }) %>
+            </button>
+            <div class="submenu-wadah"><ul class="submenu" id="sub-<%= m.kode %>">
+              <% m.anak.forEach((a) => { %>
+                <li x-show="!cariMenu || <%= JSON.stringify((m.label + ' ' + a.label).toLowerCase()) %>.includes(cariMenu.toLowerCase())">
+                  <% if (a.tersedia) { %>
+                    <a href="<%= a.href %>" class="submenu-item<%= a.aktif ? ' aktif' : '' %>" <%- a.aktif ? 'aria-current="page"' : '' %>>
+                      <%- include('ikon', { nama: a.ikon, kelas: 'submenu-ikon' }) %><span><%= a.label %></span>
+                    </a>
+                  <% } else { %>
+                    <span class="submenu-item nonaktif" aria-disabled="true" title="Belum tersedia">
+                      <%- include('ikon', { nama: a.ikon, kelas: 'submenu-ikon' }) %><span><%= a.label %></span><em class="lencana">Segera</em>
+                    </span>
+                  <% } %>
+                </li>
+              <% }) %>
+            </ul></div>
+          </li>
+        <% } %>
       <% }) %>
     </ul>
   </nav>
+
+  <div class="sidebar-kaki">
+    <div class="kartu-pengguna">
+      <span class="profil-avatar" aria-hidden="true"><%= (pengguna.nama || '?').charAt(0).toUpperCase() %></span>
+      <span class="sidebar-teks profil-teks"><strong><%= pengguna.nama %></strong><small><%= pengguna.peran %></small></span>
+    </div>
+  </div>
 </aside>

@@ -5,7 +5,7 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const env = require('./config/env');
 const { punyaAkses } = require('./lib/akses');
-const { menuUntuk } = require('./lib/menu');
+const { menuUntuk, jejak } = require('./lib/menu');
 const { bacaSesi, wajibLogin } = require('./middleware/auth');
 const { csrf } = require('./middleware/csrf');
 const { pesan } = require('./middleware/pesan');
@@ -46,6 +46,7 @@ app.use(bacaSesi);
 // Helper yang tersedia di semua view.
 app.locals.namaAplikasi = 'ERP';
 app.locals.menuUntuk = menuUntuk;
+app.locals.jejak = jejak;
 app.locals.formatDesimal = formatDesimal;
 app.locals.formatKuantitas = formatKuantitas;
 app.locals.jumlahUang = require('./lib/uang').jumlah;

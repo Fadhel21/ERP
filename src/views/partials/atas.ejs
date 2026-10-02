@@ -1,33 +1,53 @@
 <%- include('kepala') %>
-<body hx-headers='{"X-CSRF-Token": "<%= csrfToken %>"}' x-data="{ menuBuka: false }" :class="{ 'kunci-gulir': menuBuka }">
+<% const remah = jejak(path); const ekstra = remah.length && remah[remah.length - 1].href !== path ? judul : null; -%>
+<body hx-headers='{"X-CSRF-Token": "<%= csrfToken %>"}'
+      x-data="{ menuBuka: false, ciut: document.documentElement.hasAttribute('data-ciut') }"
+      x-init="$watch('ciut', (v) => simpanCiut(v))" :class="{ 'kunci-gulir': menuBuka }">
 <a class="lewati" href="#konten">Langsung ke konten</a>
 <div class="kerangka">
   <%- include('sidebar') %>
-  <div class="tirai" x-show="menuBuka" x-transition.opacity @click="menuBuka = false"></div>
+  <div class="tirai" x-show="menuBuka" x-transition.opacity @click="menuBuka = false" x-cloak></div>
   <div class="utama">
     <header class="bilah-atas">
-      <button type="button" class="tombol-ikon hanya-seluler" @click="menuBuka = true" aria-label="Buka menu">
+      <button type="button" class="tombol-ikon hanya-seluler" @click="menuBuka = true" aria-label="Buka menu" :aria-expanded="menuBuka">
         <%- include('ikon', { nama: 'menu' }) %>
       </button>
-      <h1 class="judul-halaman"><%= judul %></h1>
+      <div class="judul-wadah">
+        <% if (remah.length) { %>
+          <nav class="remah" aria-label="Breadcrumb">
+            <ol>
+              <li><a href="/">Beranda</a></li>
+              <% remah.forEach((r, i) => { const akhir = i === remah.length - 1 && !ekstra; %>
+                <li><% if (akhir) { %><span aria-current="page"><%= r.label %></span><% } else { %><a href="<%= r.href %>"><%= r.label %></a><% } %></li>
+              <% }) %>
+              <% if (ekstra) { %><li><span aria-current="page"><%= ekstra %></span></li><% } %>
+            </ol>
+          </nav>
+        <% } %>
+        <h1 class="judul-halaman"><%= judul %></h1>
+      </div>
       <div class="bilah-atas-kanan">
-        <button type="button" class="tombol-ikon" data-ganti-tema aria-label="Ganti tema terang/gelap">
+        <button type="button" class="tombol-ikon" data-ganti-tema aria-label="Ganti tema terang/gelap" title="Ganti tema">
           <span class="tema-gelap-saja"><%- include('ikon', { nama: 'matahari' }) %></span>
           <span class="tema-terang-saja"><%- include('ikon', { nama: 'bulan' }) %></span>
         </button>
-        <div class="profil">
-          <span class="profil-avatar" aria-hidden="true"><%= (pengguna.nama || '?').charAt(0).toUpperCase() %></span>
-          <span class="profil-teks">
-            <strong><%= pengguna.nama %></strong>
-            <small><%= pengguna.peran %></small>
-          </span>
-        </div>
-        <form method="post" action="/logout">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button type="submit" class="tombol-ikon" aria-label="Keluar" title="Keluar">
-            <%- include('ikon', { nama: 'keluar' }) %>
+        <div class="profil-menu" x-data="{ buka: false }" @keydown.escape="buka = false; $refs.pemicu.focus()" @click.outside="buka = false">
+          <button type="button" class="profil" x-ref="pemicu" @click="buka = !buka" :aria-expanded="buka" aria-haspopup="menu" aria-controls="menu-profil">
+            <span class="profil-avatar" aria-hidden="true"><%= (pengguna.nama || '?').charAt(0).toUpperCase() %></span>
+            <span class="profil-teks"><strong><%= pengguna.nama %></strong><small><%= pengguna.peran %></small></span>
+            <%- include('ikon', { nama: 'panah', kelas: 'profil-panah' }) %>
           </button>
-        </form>
+          <div class="profil-lipat" id="menu-profil" role="menu" x-show="buka" x-transition.origin.top.right x-cloak>
+            <div class="profil-lipat-kepala">
+              <strong><%= pengguna.nama %></strong>
+              <small class="teks-redup">@<%= pengguna.username %> · <%= pengguna.peran %></small>
+            </div>
+            <form method="post" action="/logout">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="profil-lipat-item" role="menuitem"><%- include('ikon', { nama: 'keluar' }) %><span>Keluar</span></button>
+            </form>
+          </div>
+        </div>
       </div>
     </header>
     <div id="notifikasi" class="notifikasi-wadah" aria-live="polite"><% if (locals.pesanFlash) { %><%- include('notifikasi', pesanFlash) %><% } %></div>

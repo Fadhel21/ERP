@@ -1,28 +1,142 @@
 <%- include('../partials/atas') %>
-<section class="muncul">
-  <p class="teks-redup">Selamat datang, <strong><%= pengguna.nama %></strong>.</p>
-
-  <div class="grid-kpi">
-    <% [
-      { label: 'Penjualan bulan ini', ikon: 'penjualan' },
-      { label: 'Pembelian bulan ini', ikon: 'pembelian' },
-      { label: 'Piutang belum lunas', ikon: 'akuntansi' },
-      { label: 'Barang di bawah stok minimum', ikon: 'persediaan' },
-    ].forEach((k) => { %>
-      <article class="kartu kpi">
-        <div class="kpi-ikon"><%- include('../partials/ikon', { nama: k.ikon }) %></div>
-        <div>
-          <p class="kpi-label"><%= k.label %></p>
-          <p class="kpi-nilai angka">—</p>
-        </div>
-      </article>
-    <% }) %>
-  </div>
-
-  <div class="kartu kosong">
-    <%- include('../partials/ikon', { nama: 'info', kelas: 'ikon-besar' }) %>
-    <h2>Kerangka aplikasi siap</h2>
-    <p class="teks-redup">Modul master data, persediaan, pembelian, penjualan, akuntansi, dan laporan akan diaktifkan bertahap. Angka di kartu di atas akan terisi setelah modulnya tersedia.</p>
+<%
+const tgl = (s) => s ? s.split('-').reverse().join('/') : '';
+const namaBulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const waktuLalu = (t) => {
+  const d = Math.floor((Date.now() - new Date(t).getTime()) / 60000);
+  if (d < 1) return 'baru saja'; if (d < 60) return `${d} menit lalu`;
+  if (d < 1440) return `${Math.floor(d / 60)} jam lalu`; return `${Math.floor(d / 1440)} hari lalu`;
+};
+// Skala grafik: bandingkan sebagai BigInt sen (tanpa float), lalu persen untuk tinggi batang
+const sen = (v) => BigInt(String(v).replace('.', ''));
+const maks = pembelian ? pembelian.bulanan.reduce((m, b) => (sen(b.total) > m ? sen(b.total) : m), 0n) : 0n;
+const tinggi = (v) => (maks === 0n ? 0 : Number((sen(v) * 1000n) / maks) / 10);
+// Penyingkat angka grafik: 12.500.000 → "12,5 jt"; 1.250.000.000 → "1,3 M" (BigInt, pembulatan ke bawah)
+const ringkasUang = (v) => {
+  const rupiah = sen(v) / 100n;
+  const singkat = (bagi, akhiran) => { const persepuluh = (rupiah * 10n) / bagi; return `${persepuluh / 10n}${persepuluh % 10n ? ',' + (persepuluh % 10n) : ''} ${akhiran}`; };
+  if (rupiah >= 1000000000n) return singkat(1000000000n, 'M');
+  if (rupiah >= 1000000n) return singkat(1000000n, 'jt');
+  return formatDesimal(String(rupiah), 0);
+};
+-%>
+<section class="sambutan muncul">
+  <div>
+    <h2><%= sapaan %>, <%= pengguna.nama.split(' ')[0] %></h2>
+    <p class="teks-redup"><%= new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) %> · Ringkasan kondisi usaha Anda hari ini.</p>
   </div>
 </section>
+
+<% if (pintasan.length) { %>
+  <nav class="pintasan muncul" aria-label="Pintasan">
+    <% pintasan.forEach((p) => { %>
+      <a class="pintasan-item" href="<%= p.href %>">
+        <span class="pintasan-ikon"><%- include('../partials/ikon', { nama: p.ikon }) %></span>
+        <span><%= p.label %></span>
+        <%- include('../partials/ikon', { nama: 'tambah', kelas: 'pintasan-plus' }) %>
+      </a>
+    <% }) %>
+  </nav>
+<% } %>
+
+<div class="grid-kpi">
+  <% if (persediaan) { %>
+    <a class="kartu kpi kpi-tautan" href="/persediaan/kartu-stok">
+      <div class="kpi-ikon kpi-biru"><%- include('../partials/ikon', { nama: 'persediaan' }) %></div>
+      <div><p class="kpi-label">Nilai persediaan</p><p class="kpi-nilai angka"><%= formatDesimal(persediaan.nilai) %></p>
+        <p class="kpi-sub"><%= persediaan.jenisAda %> barang tersedia</p></div>
+    </a>
+    <a class="kartu kpi kpi-tautan" href="/persediaan/kartu-stok?kurang=1">
+      <div class="kpi-ikon <%= persediaan.jumlahKurang ? 'kpi-amber' : 'kpi-hijau' %>"><%- include('../partials/ikon', { nama: persediaan.jumlahKurang ? 'peringatan' : 'centang' }) %></div>
+      <div><p class="kpi-label">Di bawah stok minimum</p><p class="kpi-nilai angka"><%= persediaan.jumlahKurang %></p>
+        <p class="kpi-sub"><%= persediaan.jumlahKurang ? 'Perlu dipesan ulang' : 'Semua aman' %></p></div>
+    </a>
+  <% } %>
+  <% if (pembelian) { %>
+    <a class="kartu kpi kpi-tautan" href="/pembelian/faktur?status=diposting">
+      <div class="kpi-ikon kpi-merah"><%- include('../partials/ikon', { nama: 'faktur' }) %></div>
+      <div><p class="kpi-label">Hutang belum lunas</p><p class="kpi-nilai angka"><%= formatDesimal(pembelian.hutang) %></p>
+        <p class="kpi-sub"><% if (Number(pembelian.lewat)) { %><span class="teks-galat"><%= pembelian.lewat %> lewat jatuh tempo</span><% } else { %><%= pembelian.segera %> jatuh tempo ≤ 7 hari<% } %></p></div>
+    </a>
+    <a class="kartu kpi kpi-tautan" href="/pembelian/pesanan?status=diposting">
+      <div class="kpi-ikon kpi-ungu"><%- include('../partials/ikon', { nama: 'dokumen' }) %></div>
+      <div><p class="kpi-label">PO belum diterima penuh</p><p class="kpi-nilai angka"><%= pembelian.poTerbuka %></p>
+        <p class="kpi-sub">Menunggu barang datang</p></div>
+    </a>
+  <% } %>
+</div>
+
+<div class="grid-dasbor">
+  <% if (pembelian) { %>
+    <section class="kartu panel muncul" aria-labelledby="j-grafik">
+      <header class="panel-kepala"><h2 id="j-grafik">Pembelian 6 bulan terakhir</h2><span class="teks-redup">Faktur diposting</span></header>
+      <div class="grafik-batang" role="img" aria-label="Grafik pembelian per bulan: <%= pembelian.bulanan.map((b) => `${namaBulan[Number(b.bulan.slice(5)) - 1]} ${formatDesimal(b.total)}`).join(', ') %>">
+        <% pembelian.bulanan.forEach((b, i) => { %>
+          <div class="batang-kolom">
+            <span class="batang-nilai angka"><%= ringkasUang(b.total) %></span>
+            <div class="batang-jalur"><div class="batang" style="--tinggi: <%= tinggi(b.total) %>%; --urut: <%= i %>"></div></div>
+            <span class="batang-label"><%= namaBulan[Number(b.bulan.slice(5)) - 1] %></span>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+
+    <section class="kartu panel muncul" aria-labelledby="j-tempo">
+      <header class="panel-kepala"><h2 id="j-tempo">Jatuh tempo hutang</h2><a href="/pembelian/pembayaran/baru">Bayar <%- include('../partials/ikon', { nama: 'kanan' }) %></a></header>
+      <% if (!pembelian.jatuhTempo.length) { %>
+        <p class="panel-kosong"><%- include('../partials/ikon', { nama: 'centang' }) %> Tidak ada hutang yang belum lunas.</p>
+      <% } else { %>
+        <ul class="daftar-ringkas">
+          <% pembelian.jatuhTempo.forEach((f) => { %>
+            <li>
+              <a href="/pembelian/faktur/<%= f.id %>">
+                <span class="daftar-ikon <%= f.lewat ? 'kpi-merah' : 'kpi-amber' %>"><%- include('../partials/ikon', { nama: 'jam' }) %></span>
+                <span class="daftar-teks"><strong class="kode"><%= f.nomor %></strong><small><%= f.pemasok_nama %> · <%= f.lewat ? 'lewat ' : '' %><%= tgl(f.jatuh_tempo) %></small></span>
+                <span class="angka daftar-nilai"><%= formatDesimal(f.sisa) %></span>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+  <% } %>
+
+  <% if (persediaan) { %>
+    <section class="kartu panel muncul" aria-labelledby="j-stok">
+      <header class="panel-kepala"><h2 id="j-stok">Stok menipis</h2><a href="/persediaan/kartu-stok?kurang=1">Lihat semua <%- include('../partials/ikon', { nama: 'kanan' }) %></a></header>
+      <% if (!persediaan.kurang.length) { %>
+        <p class="panel-kosong"><%- include('../partials/ikon', { nama: 'centang' }) %> Semua barang di atas stok minimum.</p>
+      <% } else { %>
+        <ul class="daftar-ringkas">
+          <% persediaan.kurang.forEach((b) => { %>
+            <li>
+              <a href="/persediaan/kartu-stok?barang=<%= b.id %>">
+                <span class="daftar-ikon kpi-amber"><%- include('../partials/ikon', { nama: 'barang' }) %></span>
+                <span class="daftar-teks"><strong><%= b.nama %></strong><small class="kode"><%= b.kode %></small></span>
+                <span class="angka daftar-nilai"><%= formatKuantitas(b.qty) %> / <%= formatKuantitas(b.stok_minimum) %> <small><%= b.satuan %></small></span>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+  <% } %>
+
+  <section class="kartu panel muncul" aria-labelledby="j-aktivitas">
+    <header class="panel-kepala"><h2 id="j-aktivitas">Aktivitas terbaru</h2></header>
+    <% if (!aktivitas.length) { %>
+      <p class="panel-kosong">Belum ada aktivitas.</p>
+    <% } else { %>
+      <ol class="linimasa">
+        <% aktivitas.forEach((a) => { %>
+          <li class="aksi-<%= a.aksi %>">
+            <span class="linimasa-titik" aria-hidden="true"></span>
+            <p><strong><%= a.pengguna_nama || 'Sistem' %></strong> <%= a.aksiLabel %> <%= a.tabelLabel.toLowerCase() %><% if (a.rujukan) { %> <span class="kode"><%= a.rujukan %></span><% } %></p>
+            <small class="teks-redup"><%= waktuLalu(a.created_at) %></small>
+          </li>
+        <% }) %>
+      </ol>
+    <% } %>
+  </section>
+</div>
 <%- include('../partials/bawah') %>

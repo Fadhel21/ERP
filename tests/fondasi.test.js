@@ -89,7 +89,7 @@ test('fondasi (database)', { skip: alasanLewati }, async (t) => {
     assert.equal(benar.res.status, 302);
     const beranda = await fetch(`${dasar}/`, { headers: { Cookie: benar.cookie } });
     assert.equal(beranda.status, 200);
-    assert.match(await beranda.text(), /Selamat datang/);
+    assert.match(await beranda.text(), /Selamat (pagi|siang|sore|malam)/);
   });
 
   await t.test('POST tanpa token CSRF ditolak', async () => {
