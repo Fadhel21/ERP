@@ -355,6 +355,21 @@ input:focus, select:focus, textarea:focus {
 }
 .login-judul h1 { font-size: 1.75rem; margin-bottom: var(--jarak-1); }
 .login-judul p { margin: 0; }
+.login-demo { border: 1px dashed var(--warna-garis); border-radius: var(--radius); padding: var(--jarak-3); }
+.login-demo-judul { margin: 0 0 var(--jarak-2); font-weight: 600; font-size: 0.9rem; }
+.login-demo-judul small { font-weight: 400; color: var(--warna-teks-redup); }
+.login-demo code { font-family: var(--huruf-mono); background: var(--warna-permukaan-2); padding: 1px 6px; border-radius: 4px; color: var(--warna-teks); }
+.login-demo ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--jarak-2); }
+.login-demo-item {
+  width: 100%; min-height: 44px; display: flex; flex-direction: column; align-items: flex-start;
+  padding: var(--jarak-2) var(--jarak-3); border-radius: var(--radius-kecil); cursor: pointer;
+  font: inherit; font-size: 0.85rem; text-align: left; color: var(--warna-teks);
+  background: var(--warna-permukaan-2); border: 1px solid var(--warna-garis);
+  transition: border-color var(--cepat) ease, background-color var(--cepat) ease, transform var(--cepat) ease;
+}
+.login-demo-item:hover { border-color: var(--warna-utama); background: var(--warna-utama-lembut); }
+.login-demo-item:active { transform: scale(0.98); }
+.login-demo-item span { color: var(--warna-teks-redup); font-family: var(--huruf-mono); font-size: 0.8rem; }
 .login-tema { justify-self: center; display: inline-flex; align-items: center; gap: var(--jarak-2); color: var(--warna-teks-redup); min-height: 40px; }
 .login-tema:hover { color: var(--warna-teks); }
 .getar { animation: getar 360ms ease both; }

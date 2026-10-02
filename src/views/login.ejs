@@ -29,7 +29,7 @@
 
   <%# Panel kanan: formulir %>
   <main class="login-sisi-form">
-    <section class="login-kartu" aria-labelledby="judul-login">
+    <section class="login-kartu" aria-labelledby="judul-login" x-data>
       <div class="login-judul">
         <h1 id="judul-login">Masuk</h1>
         <p class="teks-redup">Gunakan akun yang diberikan administrator.</p>
@@ -63,6 +63,22 @@
           <span x-text="kirim ? 'Memproses…' : 'Masuk'">Masuk</span>
         </button>
       </form>
+
+      <% if (akunDemo.length) { %>
+        <div class="login-demo">
+          <p class="login-demo-judul">Akun demo <small>— klik untuk mengisi, password <code><%= akunDemo[0].password %></code></small></p>
+          <ul>
+            <% akunDemo.forEach((a) => { %>
+              <li>
+                <button type="button" class="login-demo-item" data-u="<%= a.username %>" data-p="<%= a.password %>"
+                        @click="document.getElementById('username').value = $el.dataset.u; document.getElementById('password').value = $el.dataset.p; document.getElementById('password').focus()">
+                  <strong><%= a.peran %></strong><span><%= a.username %></span>
+                </button>
+              </li>
+            <% }) %>
+          </ul>
+        </div>
+      <% } %>
 
       <button type="button" class="tombol-teks login-tema" data-ganti-tema>
         <span class="tema-gelap-saja"><%- include('partials/ikon', { nama: 'matahari' }) %></span>

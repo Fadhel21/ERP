@@ -13,6 +13,7 @@
     "worker": "node worker/index.js",
     "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js",
+    "seed:demo": "node scripts/seed-demo.js",
     "test": "node tests/run.js"
   },
   "dependencies": {

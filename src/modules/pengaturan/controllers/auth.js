@@ -1,5 +1,10 @@
 const authService = require('../services/auth');
+const env = require('../../../config/env');
 const { buatSesi, hapusSesi } = require('../../../middleware/auth');
+const demo = require('../../../../scripts/seed-demo');
+
+// Daftar akun demo hanya ditampilkan di luar produksi.
+const akunDemo = env.produksi ? [] : demo.AKUN.map((a) => ({ ...a, password: demo.PASSWORD_DEMO }));
 
 // Pembatas percobaan login sederhana di memori: 10 gagal per 15 menit per IP.
 const BATAS = 10;
@@ -29,14 +34,14 @@ function tujuanAman(url) {
 
 function formLogin(req, res) {
   if (req.pengguna) return res.redirect('/');
-  res.render('login', { judul: 'Masuk', galat: null, username: '', kembali: tujuanAman(req.query.kembali) });
+  res.render('login', { judul: 'Masuk', akunDemo, galat: null, username: '', kembali: tujuanAman(req.query.kembali) });
 }
 
 async function prosesLogin(req, res, next) {
   try {
     const { username = '', password = '' } = req.body;
     const kembali = tujuanAman(req.body.kembali);
-    const tampilGalat = (pesan) => res.status(401).render('login', { judul: 'Masuk', galat: pesan, username, kembali });
+    const tampilGalat = (pesan) => res.status(401).render('login', { judul: 'Masuk', akunDemo, galat: pesan, username, kembali });
 
     if (terkunci(req.ip)) return tampilGalat('Terlalu banyak percobaan gagal. Coba lagi dalam 15 menit.');
     const pengguna = await authService.verifikasiLogin(username.trim(), password);
