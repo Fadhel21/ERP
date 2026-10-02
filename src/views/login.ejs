@@ -1,44 +1,76 @@
 <%- include('partials/kepala') %>
 <body class="halaman-login">
-<main class="login-wadah">
-  <section class="login-kartu muncul" aria-labelledby="judul-login">
-    <div class="login-merek">
-      <span class="logo" aria-hidden="true">E</span>
-      <div>
-        <h1 id="judul-login">Masuk ke <%= namaAplikasi %></h1>
+<div class="login-belah">
+  <%# Panel kiri: identitas & ikon modul (dekoratif) %>
+  <aside class="login-panel" aria-hidden="true">
+    <div class="login-panel-isi">
+      <div class="login-panel-merek">
+        <span class="logo">E</span><span><%= namaAplikasi %></span>
+      </div>
+
+      <div class="login-panel-teks">
+        <h2>Satu sistem untuk stok, transaksi, dan keuangan.</h2>
+        <p>Pembelian, penjualan, persediaan, dan akuntansi tercatat rapi dalam satu tempat — setiap angka bisa ditelusuri.</p>
+      </div>
+
+      <ul class="login-modul">
+        <% [
+          ['persediaan', 'Persediaan'], ['pembelian', 'Pembelian'], ['penjualan', 'Penjualan'],
+          ['akuntansi', 'Akuntansi'], ['laporan', 'Laporan'], ['master', 'Master Data'],
+        ].forEach(([ikon, label], i) => { %>
+          <li style="--urut: <%= i %>">
+            <span class="login-modul-ikon"><%- include('partials/ikon', { nama: ikon }) %></span>
+            <span><%= label %></span>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </aside>
+
+  <%# Panel kanan: formulir %>
+  <main class="login-sisi-form">
+    <section class="login-kartu" aria-labelledby="judul-login">
+      <div class="login-judul">
+        <h1 id="judul-login">Masuk</h1>
         <p class="teks-redup">Gunakan akun yang diberikan administrator.</p>
       </div>
-    </div>
 
-    <% if (galat) { %>
-      <div class="notifikasi notifikasi-galat" role="alert">
-        <%- include('partials/ikon', { nama: 'peringatan' }) %><span><%= galat %></span>
-      </div>
-    <% } %>
-
-    <form method="post" action="/login" class="formulir" x-data="{ kirim: false }" @submit="kirim = true">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <input type="hidden" name="kembali" value="<%= kembali %>">
-      <div class="isian">
-        <label for="username">Username</label>
-        <input id="username" name="username" type="text" autocomplete="username" required autofocus
-               value="<%= username %>" maxlength="50">
-      </div>
-      <div class="isian" x-data="{ lihat: false }">
-        <label for="password">Password</label>
-        <div class="isian-gabung">
-          <input id="password" name="password" :type="lihat ? 'text' : 'password'" type="password"
-                 autocomplete="current-password" required>
-          <button type="button" class="tombol-teks" @click="lihat = !lihat"
-                  x-text="lihat ? 'Sembunyikan' : 'Tampilkan'" aria-controls="password">Tampilkan</button>
+      <% if (galat) { %>
+        <div class="notifikasi notifikasi-galat getar" role="alert">
+          <%- include('partials/ikon', { nama: 'peringatan' }) %><span><%= galat %></span>
         </div>
-      </div>
-      <button type="submit" class="tombol tombol-utama tombol-penuh" :disabled="kirim" :aria-busy="kirim">
-        <%- include('partials/ikon', { nama: 'kunci' }) %>
-        <span x-text="kirim ? 'Memproses…' : 'Masuk'">Masuk</span>
+      <% } %>
+
+      <form method="post" action="/login" class="formulir" x-data="{ kirim: false }" @submit="kirim = true">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="kembali" value="<%= kembali %>">
+        <div class="isian">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" autocomplete="username" required autofocus
+                 value="<%= username %>" maxlength="50">
+        </div>
+        <div class="isian" x-data="{ lihat: false }">
+          <label for="password">Password</label>
+          <div class="isian-gabung">
+            <input id="password" name="password" :type="lihat ? 'text' : 'password'" type="password"
+                   autocomplete="current-password" required>
+            <button type="button" class="tombol-teks" @click="lihat = !lihat"
+                    x-text="lihat ? 'Sembunyikan' : 'Tampilkan'" aria-controls="password">Tampilkan</button>
+          </div>
+        </div>
+        <button type="submit" class="tombol tombol-utama tombol-penuh" :disabled="kirim" :aria-busy="kirim">
+          <%- include('partials/ikon', { nama: 'kunci' }) %>
+          <span x-text="kirim ? 'Memproses…' : 'Masuk'">Masuk</span>
+        </button>
+      </form>
+
+      <button type="button" class="tombol-teks login-tema" data-ganti-tema>
+        <span class="tema-gelap-saja"><%- include('partials/ikon', { nama: 'matahari' }) %></span>
+        <span class="tema-terang-saja"><%- include('partials/ikon', { nama: 'bulan' }) %></span>
+        Ganti tema
       </button>
-    </form>
-  </section>
-</main>
+    </section>
+  </main>
+</div>
 </body>
 </html>
