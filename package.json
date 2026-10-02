@@ -1,0 +1,15 @@
+{
+  "name": "erp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ERP ramping: Express + EJS + HTMX + PostgreSQL",
+  "main": "src/server.js",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/server.js",
+    "worker": "node worker/index.js",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "test": "node tests/run.js"
+  }
+}
