@@ -426,6 +426,19 @@ textarea { resize: vertical; min-height: 72px; }
 .ringkas-kartu { display: grid; gap: var(--jarak-3); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: var(--jarak-3); }
 .tabel tfoot th, .tabel tfoot td { background: var(--warna-permukaan-2); border-top: 2px solid var(--warna-garis); }
 
+.ringkasan-total { margin: 0 0 0 auto; width: min(100%, 360px); display: grid; gap: var(--jarak-1); }
+.ringkasan-total > div { display: flex; justify-content: space-between; gap: var(--jarak-4); padding: 4px 0; }
+.ringkasan-total dt { color: var(--warna-teks-redup); }
+.ringkasan-total dd { margin: 0; }
+.ringkasan-total .tebal { border-top: 1px solid var(--warna-garis); padding-top: var(--jarak-2); font-weight: 700; font-size: 1.05rem; }
+.ringkasan-total .tebal dt { color: var(--warna-teks); }
+.ringkasan-total .bantuan { text-align: right; }
+.sub-judul { font-size: 1rem; margin: var(--jarak-2) 0 0; }
+.label-palsu { font-weight: 600; font-size: 0.9rem; padding: 0; }
+.pilihan-metode { border: 0; margin: 0; padding: 0; display: grid; gap: var(--jarak-1); }
+.baris-redup td { opacity: .5; }
+.centang-baris { width: 18px; height: 18px; min-height: 0; accent-color: var(--warna-utama); cursor: pointer; }
+
 /* Dialog konfirmasi */
 .dialog-latar { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: var(--jarak-4); background: rgb(0 0 0 / 0.45); }
 .dialog {

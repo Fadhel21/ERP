@@ -10,6 +10,7 @@ const { formatDesimal, formatKuantitas } = require('../../../lib/angka');
 const JENIS = {
   penyesuaian: {
     svc: penyesuaian, judul: 'Penyesuaian Stok', tunggal: 'penyesuaian', dasar: '/persediaan/penyesuaian',
+    nav: '../persediaan/_navigasi', modul: 'persediaan', tombolLain: [{ href: '/persediaan/penyesuaian/baru?jenis=saldo_awal', label: 'Saldo awal' }],
     kolomDaftar: [
       { judul: 'Jenis', nilai: (d) => penyesuaian.JENIS[d.jenis] },
       { judul: 'Gudang', nilai: (d) => d.gudang_nama },
@@ -20,6 +21,7 @@ const JENIS = {
   },
   mutasi: {
     svc: transfer, judul: 'Mutasi Antar Gudang', tunggal: 'mutasi gudang', dasar: '/persediaan/mutasi',
+    nav: '../persediaan/_navigasi', modul: 'persediaan',
     kolomDaftar: [
       { judul: 'Dari', nilai: (d) => d.asal_nama },
       { judul: 'Ke', nilai: (d) => d.tujuan_nama },
@@ -44,8 +46,8 @@ async function daftar(req, res, next) {
     const filter = filterDari(req);
     const hasil = await k.svc.daftar(req.pengguna, filter);
     const data = { judul: k.judul, k, filter, STATUS, ...hasil };
-    if (req.get('HX-Request') && req.get('HX-Target') === 'tabel-dokumen') return res.render('persediaan/_tabel-dokumen', data);
-    res.render('persediaan/daftar', data);
+    if (req.get('HX-Request') && req.get('HX-Target') === 'tabel-dokumen') return res.render('dokumen/_tabel', data);
+    res.render('dokumen/daftar', data);
   } catch (err) { next(err); }
 }
 

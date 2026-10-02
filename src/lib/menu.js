@@ -26,10 +26,12 @@ const MENU = [
   {
     kode: 'pembelian', label: 'Pembelian', ikon: 'pembelian',
     anak: [
-      { label: 'Pesanan Pembelian (PO)', href: '/pembelian/pesanan' },
-      { label: 'Penerimaan Barang', href: '/pembelian/penerimaan' },
-      { label: 'Faktur Pembelian', href: '/pembelian/faktur' },
-      { label: 'Pembayaran Hutang', href: '/pembelian/pembayaran' },
+      { label: 'Pesanan Pembelian (PO)', href: '/pembelian/pesanan', tersedia: true },
+      { label: 'Penerimaan Barang', href: '/pembelian/penerimaan', tersedia: true },
+      { label: 'Faktur Pembelian', href: '/pembelian/faktur', tersedia: true },
+      { label: 'Uang Muka Pemasok', href: '/pembelian/uang-muka', tersedia: true },
+      { label: 'Pembayaran Hutang', href: '/pembelian/pembayaran', tersedia: true },
+      { label: 'Retur Pembelian', href: '/pembelian/retur', tersedia: true },
     ],
   },
   {

@@ -1,0 +1,93 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<%
+const awalAlpine = baris.map((b, i) => ({ k: i, barang_id: '', qty: formatKuantitas(b.qty), harga: b.harga, diskon_persen: b.diskon_persen, pilih: b.pilih, ppnBarang: b.kena_ppn, galat: {} }));
+-%>
+<section class="kartu form-kartu muncul" style="max-width: 1200px"
+         x-data="formHarga(<%= JSON.stringify(awalAlpine) %>, <%= JSON.stringify({ tarif: pajak.tarif, desimal: pajak.desimal, pakaiPpn: !!dok.pakai_ppn }) %>)">
+  <%- include('_kepala-form', { subjudul: 'Faktur dibuat dari barang yang sudah diterima. Hutang & PPN Masukan tercatat saat posting.' }) %>
+  <form method="post" action="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" class="formulir" novalidate x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid-isian">
+      <div class="isian<%= galat.pemasok_id ? ' isian-galat' : '' %>">
+        <label for="f-pemasok">Pemasok <span class="wajib">*</span></label>
+        <select id="f-pemasok" name="pemasok_id" @change="location.href = location.pathname + '?pemasok_id=' + $event.target.value">
+          <option value="">— Pilih pemasok —</option>
+          <% pemasok.forEach((x) => { %><option value="<%= x.id %>" <%= pemasokId === x.id ? 'selected' : '' %>><%= x.nama %> (termin <%= x.termin_hari %> hari)</option><% }) %>
+        </select>
+        <% if (galat.pemasok_id) { %><p class="pesan-galat"><%= galat.pemasok_id %></p><% } %>
+      </div>
+      <div class="isian<%= galat.tanggal ? ' isian-galat' : '' %>">
+        <label for="f-tanggal">Tanggal faktur <span class="wajib">*</span></label>
+        <input id="f-tanggal" type="date" name="tanggal" value="<%= dok.tanggal %>">
+        <% if (galat.tanggal) { %><p class="pesan-galat"><%= galat.tanggal %></p><% } %>
+      </div>
+      <div class="isian<%= galat.jatuh_tempo ? ' isian-galat' : '' %>">
+        <label for="f-jt">Jatuh tempo</label>
+        <input id="f-jt" type="date" name="jatuh_tempo" value="<%= dok.jatuh_tempo || '' %>">
+        <% if (galat.jatuh_tempo) { %><p class="pesan-galat"><%= galat.jatuh_tempo %></p><% } else { %><p class="bantuan">Kosongkan = tanggal faktur + termin pemasok.</p><% } %>
+      </div>
+      <div class="isian">
+        <label for="f-nfp">No. faktur pemasok</label>
+        <input id="f-nfp" name="no_faktur_pemasok" value="<%= dok.no_faktur_pemasok || '' %>" maxlength="50">
+      </div>
+      <div class="isian">
+        <label for="f-nfj">No. faktur pajak</label>
+        <input id="f-nfj" name="no_faktur_pajak" value="<%= dok.no_faktur_pajak || '' %>" maxlength="50">
+      </div>
+      <div class="isian">
+        <span class="label-palsu">Pajak</span>
+        <label class="centang besar"><input type="checkbox" name="pakai_ppn" x-model="pakaiPpn" <%= dok.pakai_ppn ? 'checked' : '' %>> Kenakan PPN <%= pajak.tarif %>%</label>
+      </div>
+      <div class="isian lebar-penuh">
+        <label for="f-ket">Keterangan</label>
+        <textarea id="f-ket" name="keterangan" rows="2" maxlength="500"><%= dok.keterangan || '' %></textarea>
+      </div>
+    </div>
+
+    <% if (!pemasokId) { %>
+      <div class="kartu kosong"><p class="teks-redup">Pilih pemasok untuk menampilkan barang yang sudah diterima tetapi belum difakturkan.</p></div>
+    <% } else if (!baris.length) { %>
+      <div class="kartu kosong"><p class="teks-redup">Tidak ada penerimaan yang belum difakturkan untuk pemasok ini.</p></div>
+    <% } else { %>
+      <div class="tabel-wadah">
+        <table class="tabel">
+          <thead><tr>
+            <th class="kolom-no"><span class="sr-only">Pilih</span></th><th>Penerimaan</th><th>Barang</th><th class="angka">Qty</th>
+            <th class="angka kolom-harga">Harga faktur</th><th class="angka" style="width: 100px">Diskon %</th><th class="angka">Total</th>
+          </tr></thead>
+          <tbody>
+            <% baris.forEach((b, i) => { %>
+              <tr :class="{ 'baris-redup': !baris[<%= i %>].pilih }">
+                <td>
+                  <input type="hidden" name="penerimaan_detail_id" value="<%= b.penerimaan_detail_id %>">
+                  <input type="hidden" name="pilih" :value="baris[<%= i %>].pilih ? '1' : '0'" value="<%= b.pilih ? '1' : '0' %>">
+                  <input type="checkbox" x-model="baris[<%= i %>].pilih" aria-label="Fakturkan <%= b.kode %>" class="centang-baris">
+                </td>
+                <td class="kode"><%= b.penerimaan_nomor %><br><small class="teks-redup"><%= b.tanggal.split('-').reverse().join('/') %></small></td>
+                <td><span class="kode"><%= b.kode %></span> · <%= b.nama %><br><small class="teks-redup">Harga PO <%= formatDesimal(b.harga) %></small></td>
+                <td class="angka"><%= formatKuantitas(b.qty) %> <small class="teks-redup"><%= b.satuan %></small></td>
+                <td><input name="harga" x-model="baris[<%= i %>].harga" inputmode="decimal" class="angka rata-kanan" aria-label="Harga <%= b.kode %>" <%- b.galat ? 'aria-invalid="true"' : '' %>>
+                  <% if (b.galat) { %><p class="pesan-galat"><%= b.galat %></p><% } %></td>
+                <td><input name="diskon_persen" x-model="baris[<%= i %>].diskon_persen" inputmode="decimal" class="angka rata-kanan" aria-label="Diskon <%= b.kode %>" placeholder="0"></td>
+                <td class="angka" x-text="baris[<%= i %>].pilih ? totalBaris(baris[<%= i %>]) : '—'"></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <dl class="ringkasan-total" aria-live="polite">
+        <div><dt>DPP</dt><dd class="angka" x-text="jumlah('dpp')"></dd></div>
+        <div><dt>PPN</dt><dd class="angka" x-text="jumlah('ppn')"></dd></div>
+        <div class="tebal"><dt>Total faktur</dt><dd class="angka" x-text="jumlah('total')"></dd></div>
+        <p class="bantuan">Pratinjau. PPN hanya untuk barang kena PPN; angka resmi dihitung server.</p>
+      </dl>
+    <% } %>
+
+    <div class="form-aksi">
+      <a class="tombol tombol-sekunder" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>">Batal</a>
+      <button type="submit" class="tombol tombol-utama" :disabled="kirim" <%= baris.length ? '' : 'disabled' %>><%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Menyimpan…' : 'Simpan draft'">Simpan draft</span></button>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

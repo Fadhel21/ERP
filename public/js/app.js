@@ -64,6 +64,59 @@ window.selisihKelas = function (fisik, sistem) {
   return t === '' ? '' : t.charAt(0) === '-' ? 'keluar' : 'masuk';
 };
 
+/** Masukan gaya Indonesia → BigInt berskala n desimal (null bila tidak valid). */
+function keSkala(s, n) {
+  s = String(s == null ? '' : s).trim().replace(/\s|Rp/gi, '');
+  if (s === '') return 0n;
+  if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+  else if ((s.match(/\./g) || []).length > 1 || /^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  var m = /^(\d+)(?:\.(\d+))?$/.exec(s);
+  if (!m || (m[2] && m[2].length > n)) return null;
+  return BigInt(m[1] + (m[2] || '').padEnd(n, '0'));
+}
+function bagiBulat(a, b) { return (a * 2n + b) / (b * 2n); }
+function formatSen(sen) {
+  var neg = sen < 0n; if (neg) sen = -sen;
+  var bulat = (sen / 100n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (neg ? '-' : '') + bulat + ',' + (sen % 100n).toString().padStart(2, '0');
+}
+
+/**
+ * Form dokumen ber-harga & diskon dengan pratinjau DPP/PPN/total (sama dengan src/lib/pajak.js).
+ * opsi: { tarif: '11', desimal: 0, pakaiPpn: true }
+ */
+window.formHarga = function (awal, opsi) {
+  var d = window.barisDokumen(awal, { pakaiHarga: true });
+  d.tarif = opsi.tarif; d.desimal = Number(opsi.desimal || 0); d.pakaiPpn = !!opsi.pakaiPpn;
+  d.isiHarga = function (b, select) {
+    b.galat.barang_id = '';
+    var opt = select.selectedOptions[0];
+    if (opt && !b.harga) b.harga = opt.dataset.harga || '';
+  };
+  d.kenaPpn = function (b) {
+    if (b.ppnBarang !== undefined) return this.pakaiPpn && !!b.ppnBarang;
+    var opt = this.$root.querySelector('select[name=barang_id] option[value="' + b.barang_id + '"]');
+    return this.pakaiPpn && (!opt || opt.dataset.ppn === '1');
+  };
+  d.hitung = function (b) {
+    var q = keSkala(b.qty, 4), h = keSkala(b.harga, 2), ds = keSkala(b.diskon_persen, 2), t = keSkala(this.tarif, 2);
+    if (q === null || h === null || ds === null || t === null || ds > 10000n) return null;
+    var unit = 10n ** BigInt(2 - this.desimal);
+    var bruto = bagiBulat(q * h, 10000n);
+    var diskon = bagiBulat(bruto * ds, 10000n * unit) * unit;
+    var dpp = bruto - diskon;
+    var ppn = this.kenaPpn(b) ? bagiBulat(dpp * t, 10000n * unit) * unit : 0n;
+    return { dpp: dpp, ppn: ppn, total: dpp + ppn };
+  };
+  d.totalBaris = function (b) { var r = this.hitung(b); return r ? formatSen(r.total) : '—'; };
+  d.jumlah = function (kunci) {
+    var t = 0n, self = this;
+    this.baris.forEach(function (b) { if (b.pilih === false) return; var r = self.hitung(b); if (r) t += r[kunci]; });
+    return formatSen(t);
+  };
+  return d;
+};
+
 (function () {
   function temaSekarang() {
     var t = document.documentElement.getAttribute('data-tema');

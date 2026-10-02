@@ -1,0 +1,45 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<section class="kartu form-kartu muncul" style="max-width: 720px">
+  <%- include('_kepala-form', { subjudul: 'Pembayaran di muka ke pemasok. Bisa dipotongkan ke faktur lewat Pembayaran Hutang.' }) %>
+  <form method="post" action="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" class="formulir" novalidate x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid-isian">
+      <div class="isian<%= galat.pemasok_id ? ' isian-galat' : '' %>">
+        <label for="f-pemasok">Pemasok <span class="wajib">*</span></label>
+        <select id="f-pemasok" name="pemasok_id">
+          <option value="">— Pilih pemasok —</option>
+          <% pemasok.forEach((x) => { %><option value="<%= x.id %>" <%= String(dok.pemasok_id) === x.id ? 'selected' : '' %>><%= x.nama %></option><% }) %>
+        </select>
+        <% if (galat.pemasok_id) { %><p class="pesan-galat"><%= galat.pemasok_id %></p><% } %>
+      </div>
+      <div class="isian<%= galat.tanggal ? ' isian-galat' : '' %>">
+        <label for="f-tanggal">Tanggal <span class="wajib">*</span></label>
+        <input id="f-tanggal" type="date" name="tanggal" value="<%= dok.tanggal %>">
+        <% if (galat.tanggal) { %><p class="pesan-galat"><%= galat.tanggal %></p><% } %>
+      </div>
+      <div class="isian<%= galat.akun_kas_id ? ' isian-galat' : '' %>">
+        <label for="f-kas">Dibayar dari <span class="wajib">*</span></label>
+        <select id="f-kas" name="akun_kas_id">
+          <option value="">— Pilih kas/bank —</option>
+          <% akunKas.forEach((a) => { %><option value="<%= a.id %>" <%= String(dok.akun_kas_id) === a.id ? 'selected' : '' %>><%= a.kode %> · <%= a.nama %></option><% }) %>
+        </select>
+        <% if (galat.akun_kas_id) { %><p class="pesan-galat"><%= galat.akun_kas_id %></p><% } %>
+      </div>
+      <div class="isian<%= galat.jumlah ? ' isian-galat' : '' %>">
+        <label for="f-jumlah">Jumlah <span class="wajib">*</span></label>
+        <input id="f-jumlah" name="jumlah" value="<%= dok.jumlah && /^\d+\.\d{2}$/.test(dok.jumlah) ? formatDesimal(dok.jumlah) : (dok.jumlah || '') %>" inputmode="decimal" class="angka rata-kanan">
+        <% if (galat.jumlah) { %><p class="pesan-galat"><%= galat.jumlah %></p><% } %>
+      </div>
+      <div class="isian lebar-penuh">
+        <label for="f-ket">Keterangan</label>
+        <textarea id="f-ket" name="keterangan" rows="2" maxlength="500"><%= dok.keterangan || '' %></textarea>
+      </div>
+    </div>
+    <div class="form-aksi">
+      <a class="tombol tombol-sekunder" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>">Batal</a>
+      <button type="submit" class="tombol tombol-utama" :disabled="kirim"><%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Menyimpan…' : 'Simpan draft'">Simpan draft</span></button>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

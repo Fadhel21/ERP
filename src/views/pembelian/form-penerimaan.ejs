@@ -1,0 +1,72 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<section class="kartu form-kartu muncul" style="max-width: 1100px">
+  <%- include('_kepala-form', { subjudul: 'Stok bertambah saat diposting, dinilai dengan harga & diskon PO (tanpa PPN).' }) %>
+  <form method="post" action="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" class="formulir" novalidate x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid-isian">
+      <div class="isian<%= galat.po_id ? ' isian-galat' : '' %>">
+        <label for="f-po">Pesanan pembelian (PO) <span class="wajib">*</span></label>
+        <select id="f-po" name="po_id" @change="location.href = location.pathname + '?po_id=' + $event.target.value">
+          <option value="">— Pilih PO —</option>
+          <% daftarPo.forEach((x) => { %><option value="<%= x.id %>" <%= poId === x.id ? 'selected' : '' %>><%= x.nomor %> · <%= x.pemasok_nama %></option><% }) %>
+        </select>
+        <% if (galat.po_id) { %><p class="pesan-galat"><%= galat.po_id %></p><% } else { %><p class="bantuan">Hanya PO yang sudah diposting & belum diterima penuh.</p><% } %>
+      </div>
+      <div class="isian<%= galat.tanggal ? ' isian-galat' : '' %>">
+        <label for="f-tanggal">Tanggal terima <span class="wajib">*</span></label>
+        <input id="f-tanggal" type="date" name="tanggal" value="<%= dok.tanggal %>">
+        <% if (galat.tanggal) { %><p class="pesan-galat"><%= galat.tanggal %></p><% } %>
+      </div>
+      <div class="isian<%= galat.gudang_id ? ' isian-galat' : '' %>">
+        <label for="f-gudang">Gudang <span class="wajib">*</span></label>
+        <select id="f-gudang" name="gudang_id">
+          <option value="">— Pilih gudang —</option>
+          <% gudang.forEach((g) => { %><option value="<%= g.id %>" <%= String(dok.gudang_id) === g.id || (!dok.gudang_id && gudang.length === 1) ? 'selected' : '' %>><%= g.nama %></option><% }) %>
+        </select>
+        <% if (galat.gudang_id) { %><p class="pesan-galat"><%= galat.gudang_id %></p><% } %>
+      </div>
+      <div class="isian">
+        <label for="f-sj">No. surat jalan pemasok</label>
+        <input id="f-sj" name="no_surat_jalan" value="<%= dok.no_surat_jalan || '' %>" maxlength="50">
+      </div>
+      <div class="isian lebar-penuh">
+        <label for="f-ket">Keterangan</label>
+        <textarea id="f-ket" name="keterangan" rows="2" maxlength="500"><%= dok.keterangan || '' %></textarea>
+      </div>
+    </div>
+
+    <% if (poId) { %>
+      <div class="tabel-wadah">
+        <table class="tabel">
+          <thead><tr><th>Barang</th><th class="angka">Dipesan</th><th class="angka">Sudah diterima</th><th class="angka">Sisa</th><th class="angka kolom-qty">Qty diterima</th></tr></thead>
+          <tbody>
+            <% baris.forEach((b) => { %>
+              <tr>
+                <td><span class="kode"><%= b.kode %></span> · <%= b.nama %></td>
+                <td class="angka"><%= formatKuantitas(b.qty) %></td>
+                <td class="angka"><%= formatKuantitas(b.qty_diterima) %></td>
+                <td class="angka"><strong><%= formatKuantitas(b.qty_sisa) %></strong> <small class="teks-redup"><%= b.satuan %></small></td>
+                <td>
+                  <input type="hidden" name="po_detail_id" value="<%= b.po_detail_id %>">
+                  <input name="qty" value="<%= b.isi %>" inputmode="decimal" class="angka rata-kanan" aria-label="Qty diterima <%= b.kode %>"
+                         <%= b.qty_sisa === '0.0000' ? 'readonly tabindex="-1"' : '' %> <%- b.galat ? 'aria-invalid="true"' : '' %> placeholder="0">
+                  <% if (b.galat) { %><p class="pesan-galat"><%= b.galat %></p><% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <p class="bantuan">Kosongkan atau isi 0 untuk barang yang belum datang.</p>
+    <% } else { %>
+      <div class="kartu kosong"><p class="teks-redup">Pilih PO terlebih dahulu untuk menampilkan barang.</p></div>
+    <% } %>
+
+    <div class="form-aksi">
+      <a class="tombol tombol-sekunder" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>">Batal</a>
+      <button type="submit" class="tombol tombol-utama" :disabled="kirim" <%= poId ? '' : 'disabled' %>><%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Menyimpan…' : 'Simpan draft'">Simpan draft</span></button>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

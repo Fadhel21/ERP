@@ -1,0 +1,85 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<% const tgl = (s) => s ? s.split('-').reverse().join('/') : ''; const hariIni = new Date().toISOString().slice(0, 10); %>
+<section class="kartu form-kartu muncul" style="max-width: 1100px" x-data="{ metode: <%= JSON.stringify(dok.metode || 'kas') %> }">
+  <%- include('_kepala-form', { subjudul: 'Alokasikan pembayaran ke satu atau beberapa faktur. Boleh sebagian.' }) %>
+  <form method="post" action="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" class="formulir" novalidate x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid-isian">
+      <div class="isian<%= galat.pemasok_id ? ' isian-galat' : '' %>">
+        <label for="f-pemasok">Pemasok <span class="wajib">*</span></label>
+        <select id="f-pemasok" name="pemasok_id" @change="location.href = location.pathname + '?pemasok_id=' + $event.target.value">
+          <option value="">— Pilih pemasok —</option>
+          <% pemasok.forEach((x) => { %><option value="<%= x.id %>" <%= pemasokId === x.id ? 'selected' : '' %>><%= x.nama %></option><% }) %>
+        </select>
+        <% if (galat.pemasok_id) { %><p class="pesan-galat"><%= galat.pemasok_id %></p><% } %>
+      </div>
+      <div class="isian<%= galat.tanggal ? ' isian-galat' : '' %>">
+        <label for="f-tanggal">Tanggal bayar <span class="wajib">*</span></label>
+        <input id="f-tanggal" type="date" name="tanggal" value="<%= dok.tanggal %>">
+        <% if (galat.tanggal) { %><p class="pesan-galat"><%= galat.tanggal %></p><% } %>
+      </div>
+      <fieldset class="isian pilihan-metode<%= galat.metode ? ' isian-galat' : '' %>">
+        <legend class="label-palsu">Metode <span class="wajib">*</span></legend>
+        <label class="centang"><input type="radio" name="metode" value="kas" x-model="metode"> Kas / Bank</label>
+        <label class="centang"><input type="radio" name="metode" value="uang_muka" x-model="metode" <%= uangMuka.length || dok.metode === 'uang_muka' ? '' : 'disabled' %>> Potong uang muka<%= uangMuka.length ? '' : ' (tidak ada)' %></label>
+        <% if (galat.metode) { %><p class="pesan-galat"><%= galat.metode %></p><% } %>
+      </fieldset>
+      <div class="isian<%= galat.akun_kas_id ? ' isian-galat' : '' %>" x-show="metode === 'kas'">
+        <label for="f-kas">Dibayar dari <span class="wajib">*</span></label>
+        <select id="f-kas" name="akun_kas_id">
+          <option value="">— Pilih kas/bank —</option>
+          <% akunKas.forEach((a) => { %><option value="<%= a.id %>" <%= String(dok.akun_kas_id) === a.id ? 'selected' : '' %>><%= a.kode %> · <%= a.nama %></option><% }) %>
+        </select>
+        <% if (galat.akun_kas_id) { %><p class="pesan-galat"><%= galat.akun_kas_id %></p><% } %>
+      </div>
+      <div class="isian<%= galat.uang_muka_id ? ' isian-galat' : '' %>" x-show="metode === 'uang_muka'" x-cloak>
+        <label for="f-um">Uang muka <span class="wajib">*</span></label>
+        <select id="f-um" name="uang_muka_id">
+          <option value="">— Pilih uang muka —</option>
+          <% uangMuka.forEach((x) => { %><option value="<%= x.id %>" <%= String(dok.uang_muka_id) === x.id ? 'selected' : '' %>><%= x.nomor %> · sisa <%= formatDesimal(x.sisa) %></option><% }) %>
+        </select>
+        <% if (galat.uang_muka_id) { %><p class="pesan-galat"><%= galat.uang_muka_id %></p><% } %>
+      </div>
+      <div class="isian lebar-penuh">
+        <label for="f-ket">Keterangan</label>
+        <textarea id="f-ket" name="keterangan" rows="2" maxlength="500"><%= dok.keterangan || '' %></textarea>
+      </div>
+    </div>
+
+    <% if (!pemasokId) { %>
+      <div class="kartu kosong"><p class="teks-redup">Pilih pemasok untuk menampilkan faktur yang belum lunas.</p></div>
+    <% } else if (!baris.length) { %>
+      <div class="kartu kosong"><p class="teks-redup">Tidak ada faktur yang belum lunas untuk pemasok ini.</p></div>
+    <% } else { %>
+      <div class="tabel-wadah">
+        <table class="tabel">
+          <thead><tr><th>Faktur</th><th>No. faktur pemasok</th><th>Jatuh tempo</th><th class="angka">Total</th><th class="angka">Sisa hutang</th><th class="angka kolom-harga">Dibayar</th><th class="kolom-aksi"></th></tr></thead>
+          <tbody>
+            <% baris.forEach((b) => { const telat = b.jatuh_tempo < hariIni; %>
+              <tr x-data="{ jumlah: <%= JSON.stringify(b.jumlah) %> }">
+                <td class="kode"><%= b.nomor %></td>
+                <td><%= b.no_faktur_pemasok || '' %></td>
+                <td class="angka"><%= tgl(b.jatuh_tempo) %><% if (telat) { %> <span class="lencana-status peringatan">Lewat</span><% } %></td>
+                <td class="angka"><%= formatDesimal(b.total) %></td>
+                <td class="angka"><strong><%= formatDesimal(b.sisa) %></strong></td>
+                <td>
+                  <input type="hidden" name="faktur_id" value="<%= b.id %>">
+                  <input name="jumlah" x-model="jumlah" inputmode="decimal" class="angka rata-kanan" aria-label="Bayar <%= b.nomor %>" placeholder="0" <%- b.galat ? 'aria-invalid="true"' : '' %>>
+                  <% if (b.galat) { %><p class="pesan-galat"><%= b.galat %></p><% } %>
+                </td>
+                <td class="kolom-aksi"><button type="button" class="tombol tombol-sekunder kecil" @click="jumlah = <%= JSON.stringify(formatDesimal(b.sisa)) %>">Lunas</button></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+
+    <div class="form-aksi">
+      <a class="tombol tombol-sekunder" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>">Batal</a>
+      <button type="submit" class="tombol tombol-utama" :disabled="kirim" <%= baris.length ? '' : 'disabled' %>><%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Menyimpan…' : 'Simpan draft'">Simpan draft</span></button>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

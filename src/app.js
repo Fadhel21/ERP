@@ -15,6 +15,7 @@ const pengaturan = require('./modules/pengaturan/routes');
 const beranda = require('./modules/beranda/routes');
 const master = require('./modules/master/routes');
 const persediaan = require('./modules/persediaan/routes');
+const pembelian = require('./modules/pembelian/routes');
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use(wajibLogin);
 app.use(beranda);
 app.use('/master', master);
 app.use('/persediaan', persediaan);
+app.use('/pembelian', pembelian);
 app.use('/pengaturan', pengaturan.modul);
 
 app.use(tidakDitemukan);

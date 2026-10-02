@@ -35,14 +35,15 @@ async function opnameDaftar(req, res, next) {
     const hasil = await opname.daftar(req.pengguna, filter);
     const k = {
       kode: 'opname', judul: 'Stok Opname', tunggal: 'stok opname', dasar: '/persediaan/opname',
+      nav: '../persediaan/_navigasi', modul: 'persediaan', labelBaru: 'Mulai opname',
       kolomDaftar: [
         { judul: 'Gudang', nilai: (d) => d.gudang_nama },
         { judul: 'Dihitung', nilai: (d) => `${d.jumlah_dihitung} / ${d.jumlah_baris}`, kanan: true },
       ],
     };
     const data = { judul: k.judul, k, filter, STATUS, ...hasil };
-    if (req.get('HX-Request') && req.get('HX-Target') === 'tabel-dokumen') return res.render('persediaan/_tabel-dokumen', data);
-    res.render('persediaan/daftar', data);
+    if (req.get('HX-Request') && req.get('HX-Target') === 'tabel-dokumen') return res.render('dokumen/_tabel', data);
+    res.render('dokumen/daftar', data);
   } catch (err) { next(err); }
 }
 

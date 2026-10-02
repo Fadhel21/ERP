@@ -1,0 +1,68 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<section class="kartu form-kartu muncul" style="max-width: 1100px">
+  <%- include('_kepala-form', { subjudul: 'Kembalikan barang ke pemasok. Nilai retur mengurangi sisa hutang faktur (tidak boleh melebihinya).' }) %>
+  <form method="post" action="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" class="formulir" novalidate x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid-isian">
+      <div class="isian<%= galat.faktur_id ? ' isian-galat' : '' %>">
+        <label for="f-faktur">Faktur pembelian <span class="wajib">*</span></label>
+        <select id="f-faktur" name="faktur_id" @change="location.href = location.pathname + '?faktur_id=' + $event.target.value">
+          <option value="">— Pilih faktur —</option>
+          <% daftarFaktur.forEach((x) => { %><option value="<%= x.id %>" <%= fakturId === x.id ? 'selected' : '' %>><%= x.nomor %> · <%= x.pemasok_nama %><%= x.sisa ? ` · sisa ${formatDesimal(x.sisa)}` : '' %></option><% }) %>
+        </select>
+        <% if (galat.faktur_id) { %><p class="pesan-galat"><%= galat.faktur_id %></p><% } %>
+      </div>
+      <div class="isian<%= galat.tanggal ? ' isian-galat' : '' %>">
+        <label for="f-tanggal">Tanggal retur <span class="wajib">*</span></label>
+        <input id="f-tanggal" type="date" name="tanggal" value="<%= dok.tanggal %>">
+        <% if (galat.tanggal) { %><p class="pesan-galat"><%= galat.tanggal %></p><% } %>
+      </div>
+      <div class="isian<%= galat.gudang_id ? ' isian-galat' : '' %>">
+        <label for="f-gudang">Dikirim dari gudang <span class="wajib">*</span></label>
+        <select id="f-gudang" name="gudang_id">
+          <option value="">— Pilih gudang —</option>
+          <% gudang.forEach((g) => { %><option value="<%= g.id %>" <%= String(dok.gudang_id) === g.id || (!dok.gudang_id && gudang.length === 1) ? 'selected' : '' %>><%= g.nama %></option><% }) %>
+        </select>
+        <% if (galat.gudang_id) { %><p class="pesan-galat"><%= galat.gudang_id %></p><% } %>
+      </div>
+      <div class="isian lebar-penuh">
+        <label for="f-ket">Alasan / keterangan</label>
+        <textarea id="f-ket" name="keterangan" rows="2" maxlength="500"><%= dok.keterangan || '' %></textarea>
+      </div>
+    </div>
+
+    <% if (!fakturId) { %>
+      <div class="kartu kosong"><p class="teks-redup">Pilih faktur untuk menampilkan barang yang bisa diretur.</p></div>
+    <% } else { %>
+      <div class="tabel-wadah">
+        <table class="tabel">
+          <thead><tr><th>Barang</th><th class="angka">Qty faktur</th><th class="angka">Sudah diretur</th><th class="angka">Harga</th><th class="angka kolom-qty">Qty retur</th></tr></thead>
+          <tbody>
+            <% baris.forEach((b) => { %>
+              <tr>
+                <td><span class="kode"><%= b.kode %></span> · <%= b.nama %></td>
+                <td class="angka"><%= formatKuantitas(b.qty) %> <small class="teks-redup"><%= b.satuan %></small></td>
+                <td class="angka"><%= b.qty_diretur === '0.0000' ? '' : formatKuantitas(b.qty_diretur) %></td>
+                <td class="angka"><%= formatDesimal(b.harga) %><%= Number(b.diskon_persen) ? ` −${String(b.diskon_persen).replace(/\.?0+$/, '')}%` : '' %></td>
+                <td>
+                  <input type="hidden" name="faktur_detail_id" value="<%= b.faktur_detail_id %>">
+                  <input name="qty" value="<%= b.isi %>" inputmode="decimal" class="angka rata-kanan" aria-label="Qty retur <%= b.kode %>" placeholder="0"
+                         <%= b.qty_sisa === '0.0000' ? 'readonly tabindex="-1"' : '' %> <%- b.galat ? 'aria-invalid="true"' : '' %>>
+                  <% if (b.galat) { %><p class="pesan-galat"><%= b.galat %></p><% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <p class="bantuan">Nilai retur dihitung dari harga & diskon faktur, termasuk PPN bila barangnya kena PPN.</p>
+    <% } %>
+
+    <div class="form-aksi">
+      <a class="tombol tombol-sekunder" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>">Batal</a>
+      <button type="submit" class="tombol tombol-utama" :disabled="kirim" <%= fakturId ? '' : 'disabled' %>><%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Menyimpan…' : 'Simpan draft'">Simpan draft</span></button>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

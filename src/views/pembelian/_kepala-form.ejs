@@ -1,0 +1,14 @@
+<%# Kepala form dokumen: tombol kembali, judul, ringkasan galat. Variabel: k, dok, galat, subjudul %>
+<header class="form-kepala">
+  <a class="tombol-ikon" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" aria-label="Kembali"><%- include('../partials/ikon', { nama: 'kiri' }) %></a>
+  <div>
+    <h2><%= dok.id ? `Ubah draft ${k.tunggal}` : `${k.tunggal[0].toUpperCase() + k.tunggal.slice(1)} baru` %></h2>
+    <p class="teks-redup"><%= subjudul %></p>
+  </div>
+</header>
+<% if (Object.keys(galat).length) { %>
+  <div class="notifikasi notifikasi-galat getar" role="alert">
+    <%- include('../partials/ikon', { nama: 'peringatan' }) %>
+    <span><%= galat.baris || 'Data belum tersimpan. Periksa isian yang ditandai.' %></span>
+  </div>
+<% } %>

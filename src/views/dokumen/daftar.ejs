@@ -1,5 +1,5 @@
 <%- include('../partials/atas') %>
-<%- include('_navigasi') %>
+<%- include(k.nav) %>
 <section class="muncul">
   <div class="bilah-alat">
     <form class="cari" role="search" action="<%= k.dasar %>" method="get"
@@ -19,16 +19,14 @@
       <label class="tanggal-ringkas"><span>s.d.</span><input type="date" name="sampai" value="<%= filter.sampai %>"></label>
     </form>
     <div class="bilah-alat-kanan">
-      <% if (boleh('persediaan', 'tambah')) { %>
-        <% if (k.kode === 'penyesuaian') { %>
-          <a class="tombol tombol-sekunder" href="<%= k.dasar %>/baru?jenis=saldo_awal">Saldo awal</a>
-        <% } %>
+      <% if (boleh(k.modul, 'tambah')) { %>
+        <% (k.tombolLain || []).forEach((tb) => { %><a class="tombol tombol-sekunder" href="<%= tb.href %>"><%= tb.label %></a><% }) %>
         <a class="tombol tombol-utama" href="<%= k.dasar %>/baru">
-          <%- include('../partials/ikon', { nama: 'tambah' }) %><span><%= k.kode === 'opname' ? 'Mulai opname' : `Buat ${k.tunggal}` %></span>
+          <%- include('../partials/ikon', { nama: 'tambah' }) %><span><%= k.labelBaru || `Buat ${k.tunggal}` %></span>
         </a>
       <% } %>
     </div>
   </div>
-  <div id="tabel-dokumen" class="tabel-muat"><%- include('_tabel-dokumen') %></div>
+  <div id="tabel-dokumen" class="tabel-muat"><%- include('_tabel') %></div>
 </section>
 <%- include('../partials/bawah') %>

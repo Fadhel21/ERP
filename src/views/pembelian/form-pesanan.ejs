@@ -1,0 +1,88 @@
+<%- include('../partials/atas') %>
+<%- include('_navigasi') %>
+<% const salah = (n) => galat[n] ? 'aria-invalid="true"' : ''; %>
+<section class="kartu form-kartu muncul" style="max-width: 1100px"
+         x-data="formHarga(<%= JSON.stringify(baris) %>, <%= JSON.stringify({ tarif: pajak.tarif, desimal: pajak.desimal, pakaiPpn: !!dok.pakai_ppn }) %>)">
+  <%- include('_kepala-form', { subjudul: 'Harga belum termasuk PPN. Disimpan sebagai draft; posting untuk mengirim PO.' }) %>
+  <form method="post" action="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>" class="formulir" novalidate x-data="{ kirim: false }" @submit="kirim = true">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid-isian">
+      <div class="isian<%= galat.tanggal ? ' isian-galat' : '' %>">
+        <label for="f-tanggal">Tanggal <span class="wajib">*</span></label>
+        <input id="f-tanggal" type="date" name="tanggal" value="<%= dok.tanggal %>" <%- salah('tanggal') %>>
+        <% if (galat.tanggal) { %><p class="pesan-galat"><%= galat.tanggal %></p><% } %>
+      </div>
+      <div class="isian<%= galat.pemasok_id ? ' isian-galat' : '' %>">
+        <label for="f-pemasok">Pemasok <span class="wajib">*</span></label>
+        <select id="f-pemasok" name="pemasok_id" <%- salah('pemasok_id') %>>
+          <option value="">— Pilih pemasok —</option>
+          <% pemasok.forEach((x) => { %><option value="<%= x.id %>" <%= String(dok.pemasok_id) === x.id ? 'selected' : '' %>><%= x.nama %> (<%= x.kode %>)</option><% }) %>
+        </select>
+        <% if (galat.pemasok_id) { %><p class="pesan-galat"><%= galat.pemasok_id %></p><% } %>
+      </div>
+      <div class="isian<%= galat.tanggal_kirim ? ' isian-galat' : '' %>">
+        <label for="f-kirim">Tanggal kirim (opsional)</label>
+        <input id="f-kirim" type="date" name="tanggal_kirim" value="<%= dok.tanggal_kirim || '' %>">
+        <% if (galat.tanggal_kirim) { %><p class="pesan-galat"><%= galat.tanggal_kirim %></p><% } %>
+      </div>
+      <div class="isian">
+        <span class="label-palsu">Pajak</span>
+        <label class="centang besar"><input type="checkbox" name="pakai_ppn" x-model="pakaiPpn" <%= dok.pakai_ppn ? 'checked' : '' %>> Kenakan PPN <%= pajak.tarif %>%</label>
+      </div>
+      <div class="isian lebar-penuh">
+        <label for="f-ket">Keterangan</label>
+        <textarea id="f-ket" name="keterangan" rows="2" maxlength="500"><%= dok.keterangan || '' %></textarea>
+      </div>
+    </div>
+
+    <fieldset class="grup-isian">
+      <legend>Barang</legend>
+      <div class="tabel-wadah tabel-baris">
+        <table class="tabel">
+          <thead><tr>
+            <th class="kolom-no">#</th><th>Barang</th><th class="angka kolom-qty">Qty</th><th class="angka kolom-harga">Harga</th>
+            <th class="angka" style="width: 100px">Diskon %</th><th class="angka" style="width: 150px">Total</th><th class="kolom-aksi"><span class="sr-only">Hapus</span></th>
+          </tr></thead>
+          <tbody>
+            <template x-for="(b, i) in baris" :key="b.k">
+              <tr class="baris-masuk">
+                <td class="kolom-no angka" x-text="i + 1"></td>
+                <td>
+                  <select name="barang_id" x-model="b.barang_id" @change="isiHarga(b, $event.target)" aria-label="Barang" :aria-invalid="!!b.galat.barang_id">
+                    <option value="">— Pilih barang —</option>
+                    <% barang.forEach((x) => { %><option value="<%= x.id %>" data-harga="<%= formatDesimal(x.harga_beli) %>" data-satuan="<%= x.satuan %>" data-ppn="<%= x.kena_ppn ? 1 : 0 %>"><%= x.kode %> · <%= x.nama %></option><% }) %>
+                  </select>
+                  <p class="pesan-galat" x-show="b.galat.barang_id" x-text="b.galat.barang_id"></p>
+                </td>
+                <td>
+                  <div class="isian-satuan"><input name="qty" x-model="b.qty" inputmode="decimal" class="angka rata-kanan" aria-label="Qty" :aria-invalid="!!b.galat.qty"><span class="satuan" x-text="satuan(b.barang_id)"></span></div>
+                  <p class="pesan-galat" x-show="b.galat.qty" x-text="b.galat.qty"></p>
+                </td>
+                <td><input name="harga" x-model="b.harga" inputmode="decimal" class="angka rata-kanan" aria-label="Harga" :aria-invalid="!!b.galat.harga">
+                  <p class="pesan-galat" x-show="b.galat.harga" x-text="b.galat.harga"></p></td>
+                <td><input name="diskon_persen" x-model="b.diskon_persen" inputmode="decimal" class="angka rata-kanan" aria-label="Diskon persen" placeholder="0">
+                  <p class="pesan-galat" x-show="b.galat.diskon_persen" x-text="b.galat.diskon_persen"></p></td>
+                <td class="angka"><span x-text="totalBaris(b)"></span><small class="teks-redup" x-show="b.barang_id && !kenaPpn(b) && pakaiPpn"> non-PPN</small></td>
+                <td class="kolom-aksi"><button type="button" class="tombol-ikon kecil bahaya" @click="hapus(i)" :disabled="baris.length === 1" aria-label="Hapus baris"><%- include('../partials/ikon', { nama: 'hapus' }) %></button></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+      <button type="button" class="tombol tombol-sekunder kecil" @click="tambah()"><%- include('../partials/ikon', { nama: 'tambah' }) %><span>Tambah baris</span></button>
+    </fieldset>
+
+    <dl class="ringkasan-total" aria-live="polite">
+      <div><dt>DPP</dt><dd class="angka" x-text="jumlah('dpp')"></dd></div>
+      <div><dt>PPN</dt><dd class="angka" x-text="jumlah('ppn')"></dd></div>
+      <div class="tebal"><dt>Total</dt><dd class="angka" x-text="jumlah('total')"></dd></div>
+      <p class="bantuan">Pratinjau. Angka resmi dihitung ulang server saat disimpan (pembulatan per baris).</p>
+    </dl>
+
+    <div class="form-aksi">
+      <a class="tombol tombol-sekunder" href="<%= dok.id ? `${k.dasar}/${dok.id}` : k.dasar %>">Batal</a>
+      <button type="submit" class="tombol tombol-utama" :disabled="kirim"><%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Menyimpan…' : 'Simpan draft'">Simpan draft</span></button>
+    </div>
+  </form>
+</section>
+<%- include('../partials/bawah') %>

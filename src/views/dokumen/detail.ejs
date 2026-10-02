@@ -1,0 +1,99 @@
+<%#
+  Halaman detail dokumen generik. Variabel:
+  k   : { dasar, modul, nav, tunggal }
+  dok : baris dokumen (id, nomor, status, dibatalkan_*, alasan_batal, jurnal_nomor, jurnal_batal_nomor)
+  t   : { jenis, info: [{ label, nilai, kode, lebar }], kolom: [{ judul, kanan }], baris: [[sel]], total: [{ label, nilai, tebal }],
+          tambahan: [{ judul, kolom, baris }], catatanBatal }
+-%>
+<%- include('../partials/atas') %>
+<%- include(k.nav) %>
+<% const waktu = (x) => x ? new Date(x).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : ''; %>
+<section class="kartu form-kartu muncul" style="max-width: 1100px" x-data="{ dialogBatal: false }">
+  <header class="detail-kepala">
+    <a class="tombol-ikon" href="<%= k.dasar %>" aria-label="Kembali ke daftar"><%- include('../partials/ikon', { nama: 'kiri' }) %></a>
+    <div class="detail-judul">
+      <h2><span class="kode"><%= dok.nomor || `DRAFT-${dok.id}` %></span> <%- include('../partials/status', { status: dok.status }) %></h2>
+      <p class="teks-redup"><%= t.jenis %></p>
+    </div>
+    <div class="detail-aksi">
+      <% if (dok.status === 'draft') { %>
+        <% if (boleh(k.modul, 'hapus')) { %>
+          <form method="post" action="<%= k.dasar %>/<%= dok.id %>/hapus" @submit="if (!confirm('Hapus draft ini?')) $event.preventDefault()">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="tombol tombol-sekunder bahaya-teks" type="submit"><%- include('../partials/ikon', { nama: 'hapus' }) %><span>Hapus</span></button>
+          </form>
+        <% } %>
+        <% if (boleh(k.modul, 'ubah')) { %>
+          <a class="tombol tombol-sekunder" href="<%= k.dasar %>/<%= dok.id %>/ubah"><%- include('../partials/ikon', { nama: 'ubah' }) %><span>Ubah</span></a>
+        <% } %>
+        <% if (boleh(k.modul, 'posting')) { %>
+          <form method="post" action="<%= k.dasar %>/<%= dok.id %>/posting" x-data="{ kirim: false }"
+                @submit="if (!confirm('Posting dokumen ini? Setelah diposting dokumen tidak bisa diubah, hanya dibatalkan.')) $event.preventDefault(); else kirim = true">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="tombol tombol-utama" type="submit" :disabled="kirim"><%- include('../partials/ikon', { nama: 'centang' }) %><span x-text="kirim ? 'Memposting…' : 'Posting'">Posting</span></button>
+          </form>
+        <% } %>
+      <% } else if (dok.status === 'diposting' && boleh(k.modul, 'batal')) { %>
+        <% (t.aksiLain || []).forEach((a) => { %><a class="tombol tombol-sekunder" href="<%= a.href %>"><%= a.label %></a><% }) %>
+        <button class="tombol tombol-sekunder bahaya-teks" type="button" @click="dialogBatal = true; $nextTick(() => $refs.alasan.focus())">
+          <%- include('../partials/ikon', { nama: 'tutup' }) %><span>Batalkan</span>
+        </button>
+      <% } %>
+    </div>
+  </header>
+
+  <dl class="info-grid">
+    <% t.info.filter((i) => i.nilai !== null && i.nilai !== undefined && i.nilai !== '').forEach((i) => { %>
+      <div class="<%= i.lebar ? 'lebar-penuh' : '' %>"><dt><%= i.label %></dt><dd class="<%= i.kode ? 'kode' : '' %>"><%= i.nilai %></dd></div>
+    <% }) %>
+    <% if (dok.jurnal_nomor) { %><div><dt>Jurnal</dt><dd class="kode"><%= dok.jurnal_nomor %><%= dok.jurnal_batal_nomor ? ` → dibalik ${dok.jurnal_batal_nomor}` : '' %></dd></div><% } %>
+    <% if (dok.status === 'batal') { %>
+      <div class="lebar-penuh kotak-batal"><dt>Dibatalkan</dt><dd><%= dok.dibatalkan_nama %> · <%= waktu(dok.dibatalkan_pada) %> — <em><%= dok.alasan_batal %></em></dd></div>
+    <% } %>
+  </dl>
+
+  <% if (t.baris && t.baris.length) { %>
+    <div class="tabel-wadah">
+      <table class="tabel">
+        <thead><tr><% t.kolom.forEach((c) => { %><th scope="col" class="<%= c.kanan ? 'angka' : '' %>"><%= c.judul %></th><% }) %></tr></thead>
+        <tbody>
+          <% t.baris.forEach((r) => { %><tr><% r.forEach((sel, i) => { %><td class="<%= t.kolom[i].kanan ? 'angka' : '' %>"><%= sel %></td><% }) %></tr><% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+  <% if (t.total && t.total.length) { %>
+    <dl class="ringkasan-total">
+      <% t.total.forEach((r) => { %><div class="<%= r.tebal ? 'tebal' : '' %>"><dt><%= r.label %></dt><dd class="angka"><%= r.nilai %></dd></div><% }) %>
+    </dl>
+  <% } %>
+
+  <% (t.tambahan || []).filter((x) => x.baris.length).forEach((x) => { %>
+    <h3 class="sub-judul"><%= x.judul %></h3>
+    <div class="tabel-wadah">
+      <table class="tabel">
+        <thead><tr><% x.kolom.forEach((c) => { %><th scope="col" class="<%= c.kanan ? 'angka' : '' %>"><%= c.judul %></th><% }) %></tr></thead>
+        <tbody><% x.baris.forEach((r) => { %><tr><% r.forEach((sel, i) => { %><td class="<%= x.kolom[i].kanan ? 'angka' : '' %>"><%= sel %></td><% }) %></tr><% }) %></tbody>
+      </table>
+    </div>
+  <% }) %>
+
+  <% if (dok.status === 'diposting' && boleh(k.modul, 'batal')) { %>
+    <div class="dialog-latar" x-show="dialogBatal" x-transition.opacity x-cloak @keydown.escape.window="dialogBatal = false">
+      <form class="dialog" role="dialog" aria-modal="true" aria-labelledby="judul-batal" method="post" action="<%= k.dasar %>/<%= dok.id %>/batal"
+            @click.outside="dialogBatal = false" x-show="dialogBatal" x-transition>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <h3 id="judul-batal">Batalkan <%= dok.nomor %>?</h3>
+        <p class="teks-redup"><%= t.catatanBatal || 'Dampak dokumen ini akan dibalik dengan tanggal hari ini. Tindakan ini tidak bisa diurungkan.' %></p>
+        <div class="isian"><label for="f-alasan">Alasan pembatalan <span class="wajib">*</span></label>
+          <textarea id="f-alasan" name="alasan" rows="3" required maxlength="500" x-ref="alasan"></textarea></div>
+        <div class="form-aksi">
+          <button type="button" class="tombol tombol-sekunder" @click="dialogBatal = false">Kembali</button>
+          <button type="submit" class="tombol tombol-bahaya">Ya, batalkan</button>
+        </div>
+      </form>
+    </div>
+  <% } %>
+</section>
+<%- include('../partials/bawah') %>
