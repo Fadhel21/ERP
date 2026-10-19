@@ -131,7 +131,7 @@ const ringkasUang = (v) => {
         <% aktivitas.forEach((a) => { %>
           <li class="aksi-<%= a.aksi %>">
             <span class="linimasa-titik" aria-hidden="true"></span>
-            <p><strong><%= a.pengguna_nama || 'Sistem' %></strong> <%= a.aksiLabel %> <%= a.tabelLabel.toLowerCase() %><% if (a.rujukan) { %> <span class="kode"><%= a.rujukan %></span><% } %></p>
+            <p><strong><%= a.pengguna_nama || 'Sistem' %></strong> <%= a.aksiLabel %> <%= /^[A-Z]{2,}$/.test(a.tabelLabel) ? a.tabelLabel : a.tabelLabel.toLowerCase() %><% if (a.rujukan) { %> <span class="kode"><%= a.rujukan %></span><% } %></p>
             <small class="teks-redup"><%= waktuLalu(a.created_at) %></small>
           </li>
         <% }) %>
